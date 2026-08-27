@@ -47,6 +47,19 @@ body{margin:0;background:var(--plane);color:var(--ink);
 .loginbox .lfoot{font-size:.72rem;color:var(--ink-3);margin:30px 0 0;letter-spacing:.06em;
   text-transform:uppercase}
 
+/* ---------- loading ----------
+   Visible in the markup, so it paints as soon as the HTML is parsed rather
+   than after the session call comes back. */
+.bootwrap{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:22px;padding:24px}
+.bootwrap img{width:170px;max-width:60%;height:auto;opacity:.9}
+.bootbar{width:150px;height:3px;border-radius:2px;background:var(--surface-2);
+  overflow:hidden}
+.bootbar i{display:block;width:40%;height:100%;border-radius:2px;background:var(--band);
+  animation:bootslide 1.1s ease-in-out infinite}
+@keyframes bootslide{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}
+@media(prefers-reduced-motion:reduce){.bootbar i{animation:none;width:100%;opacity:.5}}
+
 /* A class that sets display beats the hidden attribute's own rule, and the
    sign-in box and the brand cards both set one. Without this they stay painted
    underneath the report. */
@@ -158,6 +171,10 @@ header{position:sticky;top:0;z-index:20;background:var(--plane);
 .ck:hover{background:var(--surface-2)}
 .ck input{margin:0;accent-color:var(--s1);cursor:pointer;width:13px;height:13px}
 .ck:has(input:checked){border-color:var(--s1);color:var(--ink)}
+/* a view with no periods in the data at all — shown, so its absence is
+   explained, rather than quietly missing from the row */
+.ck.off{opacity:.45;cursor:default}
+.ck.off:hover{background:transparent}
 .ckall{display:inline-flex;gap:6px;margin-left:6px}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
 @media(max-width:840px){.charts{grid-template-columns:1fr}}
@@ -355,6 +372,11 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 
 </head><body>
 
+<div class="bootwrap" id="booting">
+  <img id="bootLogo" alt="Red-Tail Consulting">
+  <div class="bootbar" role="status" aria-label="Loading"><i></i></div>
+</div>
+
 <div class="loginwrap" id="login" hidden>
   <div class="loginbox">
     <img id="loginLogo" alt="Red-Tail Consulting">
@@ -525,9 +547,6 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 
 <section class="panel" id="pdfPanel" hidden>
   <h2>Make a PDF</h2>
-  <p class="cap">Choose what goes in it. Each page you tick becomes one page of the
-    document — so Sales and Advertising for August is a two-page PDF. Charts print
-    exactly as they are on screen, including which ones you have switched off.</p>
   <div id="pdfPick"></div>
   <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <button class="btn primary" type="button" id="pdfGo">Make PDF</button>
@@ -2660,6 +2679,22 @@ function render() {
 let AUTH = null;                    // { user, role, brand, brands: [...] }
 let BRAND = null;                   // the slug this page is showing, if any
 
+/**
+ * Exactly one of the four screens is on at a time.
+ *
+ * The page starts on `booting`, which is the only one not hidden in the
+ * markup — it paints the moment the HTML is parsed, before the session call
+ * comes back. Without it the browser shows white for as long as that call
+ * takes, which on a cold function is a second or more and reads as a broken
+ * page rather than a loading one.
+ */
+function showScreen(which) {
+  ['booting', 'login', 'brands', 'app'].forEach(function (id) {
+    const n = document.getElementById(id);
+    if (n) n.hidden = (id !== which);
+  });
+}
+
 /** /b/heale → 'heale'. Anything else → null. */
 function brandFromPath() {
   const m = /^\/b\/([a-z0-9][a-z0-9-]*)\/?$/.exec(location.pathname);
@@ -2732,11 +2767,6 @@ function brandCard(b, ink) {
 }
 
 function showBrands() {
-  document.getElementById('login').hidden = true;
-  document.getElementById('app').hidden = true;
-  const hub = document.getElementById('brands');
-  hub.hidden = false;
-
   /* the hub wears the same band as the reports, so the two feel like one site */
   const paint = bandPaint(BAND_DEFAULT, 92);
   const band = document.getElementById('hubBand');
@@ -2758,6 +2788,7 @@ function showBrands() {
         '<b>BRANDS</b> variable in Netlify.</p>';
 
   document.getElementById('hubOut').onclick = signOut;
+  showScreen('brands');
 }
 
 async function signOut() {
@@ -2878,6 +2909,9 @@ function exportSite() {
   if (panel) panel.hidden = true;
   const gate = doc.querySelector('#gate');
   if (gate) gate.hidden = false;
+  /* ship it on the loading screen, which is where a fresh load starts */
+  const boot = doc.querySelector('#booting');
+  if (boot) boot.hidden = false;
   const un = doc.querySelector('#unlocked');
   if (un) un.hidden = true;
   const pw = doc.querySelector('#pass');
@@ -3147,8 +3181,10 @@ async function saveToSite() {
 
 function applyRole() {
   const admin = ROLE === 'admin';
-  /* The brand can make its own PDF of what it is allowed to see. */
-  document.getElementById('togglePdf').hidden = false;
+  /* The PDF is a thing you send a brand, not a thing the brand makes for
+     itself — it goes out under Red-Tail's name and with pages you chose. */
+  document.getElementById('togglePdf').hidden = !admin;
+  if (!admin) document.getElementById('pdfPanel').hidden = true;
   /* On the site the session already established who this is, so the panel's
      own passphrase would be a second lock on the same door. In the single-file
      copy it is the only lock there is, so it stays. */
@@ -3177,8 +3213,7 @@ function applyRole() {
 }
 
 function showLogin() {
-  document.getElementById('login').hidden = false;
-  document.getElementById('app').hidden = true;
+  showScreen('login');
   /* the sign-in page sits on the plain background, so it wants the version of
      the lockup drawn for a light surface */
   document.getElementById('loginLogo').src = LOGO_ON_LIGHT;
@@ -3216,9 +3251,8 @@ function showLogin() {
 /** Fetch one brand's dataset and draw the report. */
 async function openBrand(slug) {
   BRAND = slug;
-  document.getElementById('login').hidden = true;
-  document.getElementById('brands').hidden = true;
-  document.getElementById('app').hidden = false;
+  /* stay on the loading screen while the dataset is on its way — begin()
+     switches to the report once there is something to draw */
   const res = await fetch('/api/data?brand=' + encodeURIComponent(slug),
     { credentials: 'same-origin' });
   if (!res.ok) { location.href = '/'; return; }
@@ -3240,6 +3274,7 @@ function begin(ds) {
   applyRole();
   render();
   document.getElementById('exportBtn').disabled = MODE === 'file';
+  showScreen('app');
 }
 
 /* ---------- boot ----------
@@ -3248,6 +3283,10 @@ function begin(ds) {
  * address names one or the session only has one; otherwise the cards.
  */
 (async function boot() {
+  /* the lockup is a constant in this script, so the loading screen can wear it
+     straight away rather than sitting there as an empty box */
+  document.getElementById('bootLogo').src = LOGO_ON_LIGHT;
+
   let embedded = null;
   try { embedded = JSON.parse(document.getElementById('dataset').textContent); }
   catch (e) { embedded = null; }
@@ -3305,81 +3344,99 @@ const PDF_BLOCKS = [
 ];
 
 const pdfPick = {
+  modes: { month: true, week: false },
   tabs: { sales: true, ads: true },
-  blocks: { kpis: true, compare: true, charts: true, products: true },
-  periods: null,          // set on first open to the period in view
 };
 
 function pdfPanelOpen() {
   return !document.getElementById('pdfPanel').hidden;
 }
 
+/**
+ * Which period each view contributes.
+ *
+ * The view you are actually looking at contributes the period you picked in
+ * the header; the other contributes its most recent one. Anything else means
+ * ticking "Weekly" from a monthly screen would silently print nothing.
+ */
+function pdfKeyFor(mode) {
+  if (view.mode === mode && view.key) return view.key;
+  const all = availablePeriods(mode);
+  return all[all.length - 1] || null;
+}
+
+const MODE_LABEL = { month: 'Monthly', week: 'Weekly' };
+const TAB_LABEL = { sales: 'Sales', ads: 'Advertising' };
+
 function renderPdfPanel() {
-  const periods = availablePeriods(view.mode).slice().reverse();
-  if (!pdfPick.periods) pdfPick.periods = {};
-  if (!Object.keys(pdfPick.periods).some(k => pdfPick.periods[k])) {
-    pdfPick.periods[view.key] = true;
-  }
-
-  const box = id => '<label class="ck"><input type="checkbox" ' + id + '></label>';
-  const tabRow = ['sales', 'ads'].map(t =>
-    '<label class="ck"><input type="checkbox" data-pt="' + t + '"' +
-    (pdfPick.tabs[t] ? ' checked' : '') + '>' +
-    (t === 'sales' ? 'Sales' : 'Advertising') + '</label>').join('');
-
-  const periodRow = periods.map(function (k) {
-    const p = periodInfo(view.mode, k);
-    return '<label class="ck"><input type="checkbox" data-pp="' + k + '"' +
-      (pdfPick.periods[k] ? ' checked' : '') + '>' +
-      (view.mode === 'week' ? 'W' + k.split('-W')[1] : p.label) + '</label>';
-  }).join('');
-
-  const blockRow = PDF_BLOCKS.map(b =>
-    '<label class="ck"><input type="checkbox" data-pb="' + b.id + '"' +
-    (pdfPick.blocks[b.id] ? ' checked' : '') + '>' + b.t + '</label>').join('');
+  const row = function (keys, attr, bag, label, disabled) {
+    return keys.map(function (k) {
+      const off = disabled && disabled(k);
+      return '<label class="ck' + (off ? ' off' : '') + '">' +
+        '<input type="checkbox" data-' + attr + '="' + k + '"' +
+        (bag[k] && !off ? ' checked' : '') + (off ? ' disabled' : '') + '>' +
+        label[k] + '</label>';
+    }).join('');
+  };
 
   document.getElementById('pdfPick').innerHTML =
-    '<h3>Pages</h3><div class="chartpick">' + tabRow + '</div>' +
-    '<h3>' + (view.mode === 'week' ? 'Weeks' : 'Months') + '</h3>' +
-    '<div class="chartpick">' + periodRow + '</div>' +
-    '<h3>On every page</h3><div class="chartpick">' + blockRow + '</div>';
+    '<h3>Period</h3><div class="chartpick">' +
+      row(['month', 'week'], 'pm', pdfPick.modes, MODE_LABEL, m => !pdfKeyFor(m)) +
+    '</div>' +
+    '<h3>Report</h3><div class="chartpick">' +
+      row(['sales', 'ads'], 'pt', pdfPick.tabs, TAB_LABEL) +
+    '</div>';
 
-  const wire = (attr, bag) => document.querySelectorAll('#pdfPick input[' + attr + ']')
+  const wire = (attr, bag) => document.querySelectorAll('#pdfPick input[data-' + attr + ']')
     .forEach(function (c) {
       c.onchange = function () {
-        bag[c.getAttribute(attr)] = c.checked;
+        bag[c.getAttribute('data-' + attr)] = c.checked;
         updatePdfCount();
       };
     });
-  wire('data-pt', pdfPick.tabs);
-  wire('data-pp', pdfPick.periods);
-  wire('data-pb', pdfPick.blocks);
+  wire('pm', pdfPick.modes);
+  wire('pt', pdfPick.tabs);
   updatePdfCount();
 }
 
 function pdfPages() {
   const out = [];
-  const periods = availablePeriods(view.mode).filter(k => pdfPick.periods[k]);
-  periods.forEach(function (k) {
+  ['month', 'week'].forEach(function (m) {
+    if (!pdfPick.modes[m]) return;
+    const k = pdfKeyFor(m);
+    if (!k) return;
     ['sales', 'ads'].forEach(function (t) {
-      if (pdfPick.tabs[t]) out.push({ mode: view.mode, key: k, tab: t });
+      if (pdfPick.tabs[t]) out.push({ mode: m, key: k, tab: t });
     });
   });
   return out;
 }
 
 function updatePdfCount() {
-  const n = pdfPages().length;
-  const blocks = PDF_BLOCKS.filter(b => pdfPick.blocks[b.id]).length;
+  const pages = pdfPages();
   const btn = document.getElementById('pdfGo');
-  btn.disabled = !n || !blocks;
+  btn.disabled = !pages.length;
+
+  /* Naming the periods is the one thing this panel cannot leave out: the week
+     it prints is not necessarily the one on screen, and finding that out from
+     the finished PDF is too late. */
+  const seen = [], names = [];
+  pages.forEach(function (p) {
+    const id = p.mode + p.key;
+    if (seen.indexOf(id) >= 0) return;
+    seen.push(id);
+    const info = periodInfo(p.mode, p.key);
+    names.push(info ? info.label : p.key);
+  });
+
   /* One tick is one report, not one sheet of paper — a report with charts and
      a product table runs to three or four sheets, and saying "2 pages" when
      seven come out would be a small lie every time. */
+  const n = pages.length;
   document.getElementById('pdfCount').textContent = !n
     ? 'Nothing selected.'
-    : n + (n === 1 ? ' report' : ' reports') + ', each starting on a new sheet — ' +
-      'the print dialog opens, choose “Save as PDF”.';
+    : n + (n === 1 ? ' report' : ' reports') + ' — ' + names.join(' · ') +
+      '. The print dialog opens, choose \u201cSave as PDF\u201d.';
 }
 
 /** One page of the PDF, snapshotted out of the live report. */
@@ -3393,7 +3450,6 @@ function pdfPageHtml(page) {
 
   parts.push('<div class="pdf-head">' + grab('#masthead') + '</div>');
   PDF_BLOCKS.forEach(function (b) {
-    if (!pdfPick.blocks[b.id]) return;
     if (b.salesOnly && page.tab !== 'sales') return;
     if (b.head) parts.push(grab(b.head));
     parts.push(grab(b.sel));
