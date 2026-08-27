@@ -345,7 +345,12 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
   .charts{grid-template-columns:1fr 1fr}
 
   /* Once a PDF has been assembled, that document is the only thing on paper. */
-  body.printing #app,body.printing #login{display:none!important}
+  /* Everything but the assembled document goes, by name and by exclusion —
+     Netlify injects its own badge into the body on the free plan, and it was
+     turning up in the corner of the first sheet. */
+  body.printing #app,body.printing #login,body.printing #brands,
+  body.printing #booting{display:none!important}
+  body.printing > *:not(#printDoc){display:none!important}
   body.printing #printDoc{display:block}
   .pdf-page{break-after:page;page-break-after:always}
   .pdf-page:last-child{break-after:auto;page-break-after:auto}
@@ -363,7 +368,12 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
   .pdf-page .pname,.pdf-page .grp{word-break:break-word}
   .pdf-page tbody td{vertical-align:middle}
   .pdf-page th,.pdf-page td{padding:5px 7px}
-  .pdf-page .sechead{margin:16px 0 8px}
+  /* A heading alone at the foot of a sheet, with its charts overleaf, reads as
+     a mistake. Chrome honours break-after:avoid in print, so the heading is
+     pushed over with them; the grid itself must stay breakable or twelve
+     charts would demand one impossible sheet. */
+  .pdf-page .sechead{margin:16px 0 8px;break-after:avoid;page-break-after:avoid}
+  .pdf-page .chartcard,.pdf-page .card{break-inside:avoid;page-break-inside:avoid}
   .pdf-foot{font-size:.62rem;color:var(--ink-3);margin:14px 0 0;text-align:center;
     letter-spacing:.05em}
   @page{margin:12mm 10mm}
@@ -3460,11 +3470,26 @@ function pdfPageHtml(page) {
   return '<section class="pdf-page">' + parts.join('') + '</section>';
 }
 
+/**
+ * What the browser prints in the top margin, and what it suggests as the
+ * filename in the Save-as-PDF dialog. The page cannot remove the date beside
+ * it — that is the browser's own margin printing, switched off by the
+ * "Headers and footers" tick in the print dialog, which takes this title with
+ * it. So this is worth getting right for the case where the tick stays on.
+ */
+function pdfTitle(pages) {
+  const m = pages.some(p => p.mode === 'month');
+  const w = pages.some(p => p.mode === 'week');
+  if (m && w) return 'Monthly and Weekly Report';
+  return w ? 'Weekly Report' : 'Monthly Report';
+}
+
 async function makePdf() {
   const pages = pdfPages();
   if (!pages.length) return;
 
   const keep = { tab: view.tab, key: view.key, mode: view.mode, open: view.open };
+  const keepTitle = document.title;
   view.open = null;
 
   const html = [];
@@ -3487,9 +3512,11 @@ async function makePdf() {
   view.tab = keep.tab; view.key = keep.key; view.mode = keep.mode; view.open = keep.open;
   render();
 
+  document.title = pdfTitle(pages);
   document.body.classList.add('printing');
   window.print();
   document.body.classList.remove('printing');
+  document.title = keepTitle;
   doc.innerHTML = '';
 }
 
