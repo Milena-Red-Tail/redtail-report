@@ -1,5 +1,5 @@
 import { gunzipSync } from 'node:zlib';
-import { roleOf, store, DATA_KEY, json } from './_shared.mjs';
+import { authOf, resolveBrand, store, dataKey, metaKey, json } from './_shared.mjs';
 
 const MAX_BYTES = 12 * 1024 * 1024;
 
@@ -11,8 +11,12 @@ export default async (req) => {
   if (req.headers.get('x-report-write') !== '1') {
     return json({ error: 'missing write header' }, 400);
   }
-  const role = await roleOf(req);
-  if (role !== 'admin') return json({ error: 'admin only' }, 403);
+  const auth = await authOf(req);
+  if (!auth || auth.role !== 'team') return json({ error: 'team only' }, 403);
+
+  const asked = new URL(req.url).searchParams.get('brand');
+  const slug = resolveBrand(auth, asked);
+  if (!slug) return json({ error: 'which brand? none was named' }, 400);
 
   const buf = Buffer.from(await req.arrayBuffer());
   if (!buf.length) return json({ error: 'empty body' }, 400);
@@ -33,11 +37,20 @@ export default async (req) => {
   }
 
   ds.savedAt = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  ds.savedBy = auth.user;
+  const days = Object.keys(ds.daily);
+  days.sort();
+
   const s = await store('report');
-  await s.setJSON(DATA_KEY, ds);
-  /* keep the copy it replaced, so a bad upload is one call from undone */
-  return json({ ok: true, savedAt: ds.savedAt,
-                days: Object.keys(ds.daily).length });
+  await s.setJSON(dataKey(slug), ds);
+  /* A small companion record, so the cards page can say when each brand was
+     last updated without pulling every dataset down to find out. */
+  await s.setJSON(metaKey(slug), {
+    savedAt: ds.savedAt, savedBy: auth.user, days: days.length,
+    from: days[0] || null, to: days[days.length - 1] || null,
+  });
+  return json({ ok: true, savedAt: ds.savedAt, savedBy: auth.user,
+                brand: slug, days: days.length });
 };
 
 export const config = { path: '/api/save' };
