@@ -34,6 +34,19 @@ body{margin:0;background:var(--plane);color:var(--ink);
   -webkit-font-smoothing:antialiased}
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px 72px}
 
+/* ---------- sign in ---------- */
+.loginwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.loginbox{width:100%;max-width:340px;text-align:center}
+.loginbox img{width:190px;max-width:70%;height:auto;margin:0 auto 26px;display:block}
+.loginbox h1{font-size:1.5rem;font-weight:700;margin:0 0 6px;letter-spacing:-.01em}
+.loginbox .lsub{font-size:.85rem;color:var(--ink-3);margin:0 0 22px}
+.loginbox input[type=password]{width:100%;text-align:center;font-size:.95rem;padding:11px 12px;
+  margin-bottom:10px}
+.loginbox .btn{width:100%;padding:11px}
+.loginbox .logline{margin-top:12px;text-align:left}
+.loginbox .lfoot{font-size:.72rem;color:var(--ink-3);margin:30px 0 0;letter-spacing:.06em;
+  text-transform:uppercase}
+
 /* ---------- masthead ---------- */
 .masthead{background:var(--band);color:var(--band-ink);border-radius:12px;
   padding:24px 28px;margin:20px 0 0;display:flex;align-items:center;
@@ -103,6 +116,10 @@ header{position:sticky;top:0;z-index:20;background:var(--plane);
 .meter span{display:block;height:100%;background:var(--s1)}
 
 /* ---------- cards and charts ---------- */
+#pdfPick h3{font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin:16px 0 8px}
+#pdfPick h3:first-child{margin-top:0}
+#printDoc{display:none}
 .chartpick{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:0 0 14px}
 .ck{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;color:var(--ink-2);
   background:var(--surface);border:1px solid var(--ring);border-radius:999px;
@@ -274,30 +291,49 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 .sub2{text-transform:none!important;letter-spacing:0!important}
 @media print{
   header{position:static}
-  header,.btn,#updatePanel,#modes,.psel,#tabs,#chartPick{display:none!important}
+  header,.btn,#updatePanel,#pdfPanel,#modes,.psel,#tabs,#chartPick{display:none!important}
   .masthead{margin-top:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .card,.kpi,.tablewrap{break-inside:avoid;box-shadow:none}
   .charts{grid-template-columns:1fr 1fr}
+
+  /* Once a PDF has been assembled, that document is the only thing on paper. */
+  body.printing #app,body.printing #login{display:none!important}
+  body.printing #printDoc{display:block}
+  .pdf-page{break-after:page;page-break-after:always}
+  .pdf-page:last-child{break-after:auto;page-break-after:auto}
+  .pdf-head .masthead{margin:0 0 18px}
+  .pdf-page .kpis{margin-bottom:16px}
+  .pdf-page .charts{gap:10px}
+  /* on screen the wide table scrolls sideways; on paper it has to fit, so the
+     scroller stops clipping and the columns are allowed to squeeze */
+  .pdf-page .scroll{overflow:visible}
+  .pdf-page table{min-width:0;width:100%;font-size:.58rem}
+  /* fixed columns squeezed the headings into each other; letting the browser
+     size them and letting the headings wrap keeps every label readable */
+  .pdf-page thead th{white-space:normal;letter-spacing:.02em;font-size:.5rem;
+    line-height:1.25;vertical-align:bottom}
+  .pdf-page .pname,.pdf-page .grp{word-break:break-word}
+  .pdf-page tbody td{vertical-align:middle}
+  .pdf-page th,.pdf-page td{padding:5px 7px}
+  .pdf-page .sechead{margin:16px 0 8px}
+  .pdf-foot{font-size:.62rem;color:var(--ink-3);margin:14px 0 0;text-align:center;
+    letter-spacing:.05em}
+  @page{margin:12mm 10mm}
 }
 </style>
 
-<div class="wrap" id="login" hidden>
-  <div class="masthead" id="loginBand">
-    <div class="mh-l">
-      <h1 id="loginBrand">Report</h1>
-      <p class="mh-sub">Private — sign in to continue</p>
-    </div>
-    <img class="mh-logo" id="loginLogo" alt="">
+<div class="loginwrap" id="login" hidden>
+  <div class="loginbox">
+    <img id="loginLogo" alt="Red-Tail Consulting">
+    <h1>Reports</h1>
+    <p class="lsub">Private. Enter the password to continue.</p>
+    <form id="loginForm">
+      <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password">
+      <button class="btn primary" type="submit" id="loginBtn">Sign in</button>
+      <p class="logline bad" id="loginMsg" hidden></p>
+    </form>
+    <p class="lfoot">Red-Tail Consulting</p>
   </div>
-  <form class="panel" id="loginForm" style="max-width:420px;margin:22px auto 0">
-    <h2>Sign in</h2>
-    <p class="cap">This report is not public. Nothing is loaded into the page until
-      the password is accepted.</p>
-    <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password"
-           style="width:100%;margin-bottom:12px">
-    <button class="btn primary" type="submit" id="loginBtn" style="width:100%">Sign in</button>
-    <p class="logline bad" id="loginMsg" hidden></p>
-  </form>
 </div>
 
 <div class="wrap" id="app">
@@ -324,6 +360,7 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
     </div>
     <div class="headright">
       <span class="sub" id="roleTag" hidden></span>
+      <button class="btn" type="button" id="togglePdf">PDF</button>
       <button class="btn" type="button" id="toggleUpdate">Update data</button>
       <button class="btn" type="button" id="signOut" hidden>Sign out</button>
     </div>
@@ -434,6 +471,18 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
   </div>
 </section>
 
+<section class="panel" id="pdfPanel" hidden>
+  <h2>Make a PDF</h2>
+  <p class="cap">Choose what goes in it. Each page you tick becomes one page of the
+    document — so Sales and Advertising for August is a two-page PDF. Charts print
+    exactly as they are on screen, including which ones you have switched off.</p>
+  <div id="pdfPick"></div>
+  <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="btn primary" type="button" id="pdfGo">Make PDF</button>
+    <span class="sub" id="pdfCount"></span>
+  </div>
+</section>
+
 <div class="empty" id="emptyState" hidden>
   <b>No data yet</b>
   Open <em>Update data</em> and drop this week's exports in.
@@ -482,6 +531,7 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 </div>
 </div>
 <div class="tip" id="tip" role="status"></div>
+<div id="printDoc" aria-hidden="true"></div>
 <script type="application/json" id="dataset">{}</script></head><body>
 
 
@@ -2882,6 +2932,7 @@ function initUpdate() {
   });
 
   initRangePicker();
+  initPdf();
 }
 
 /* ---------- talking to the site ----------
@@ -2927,6 +2978,8 @@ async function saveToSite() {
 
 function applyRole() {
   const admin = ROLE === 'admin';
+  /* The brand can make its own PDF of what it is allowed to see. */
+  document.getElementById('togglePdf').hidden = false;
   /* On the site the session already established who this is, so the panel's
      own passphrase would be a second lock on the same door. In the single-file
      copy it is the only lock there is, so it stays. */
@@ -2947,17 +3000,12 @@ function applyRole() {
     : 'then drag it onto Netlify';
 }
 
-function showLogin(brand) {
+function showLogin() {
   document.getElementById('login').hidden = false;
   document.getElementById('app').hidden = true;
-  if (brand) document.getElementById('loginBrand').textContent = brand;
-  const paint = bandPaint(BAND_DEFAULT, 92);
-  const band = document.getElementById('loginBand');
-  band.style.background = paint.background;
-  band.style.color = paint.color;
-  const lg = document.getElementById('loginLogo');
-  const src = mastheadLogo(paint);
-  if (src) lg.src = src; else lg.hidden = true;
+  /* the sign-in page sits on the plain background, so it wants the version of
+     the lockup drawn for a light surface */
+  document.getElementById('loginLogo').src = LOGO_ON_LIGHT;
 
   const form = document.getElementById('loginForm');
   const msg = document.getElementById('loginMsg');
@@ -3027,7 +3075,7 @@ function begin(ds) {
   if (res && res.status === 401) {
     /* the functions are live and this browser has no session */
     MODE = 'server';
-    showLogin(embedded && embedded.brand);
+    showLogin();
     return;
   }
   if (res && res.ok && isJson) {
@@ -3041,6 +3089,171 @@ function begin(ds) {
   MODE = 'file';
   begin(embedded || emptyDataset());
 })();
+
+
+/* ===== 14_pdf.js ===== */
+/* ============================================================================
+ *  PDF — pick the pages, then print.
+ *
+ *  No PDF library. The charts are already SVG and the tables are already HTML,
+ *  so the browser's own print engine produces sharper output than any canvas
+ *  rasteriser would, at a fraction of the weight, with selectable text. Each
+ *  chosen page is rendered live, snapshotted, and laid into a print-only
+ *  document; the screen never changes for more than a moment.
+ * ========================================================================= */
+
+const PDF_BLOCKS = [
+  { id: 'kpis',    t: 'Headline numbers', sel: '#kpis' },
+  { id: 'compare', t: 'Comparison table', sel: '#cmpCard' },
+  { id: 'charts',  t: 'Charts',           sel: '#chartGrid', head: '#chartsHead' },
+  { id: 'products', t: 'Products',        sel: '#tablewrap', salesOnly: true },
+];
+
+const pdfPick = {
+  tabs: { sales: true, ads: true },
+  blocks: { kpis: true, compare: true, charts: true, products: true },
+  periods: null,          // set on first open to the period in view
+};
+
+function pdfPanelOpen() {
+  return !document.getElementById('pdfPanel').hidden;
+}
+
+function renderPdfPanel() {
+  const periods = availablePeriods(view.mode).slice().reverse();
+  if (!pdfPick.periods) pdfPick.periods = {};
+  if (!Object.keys(pdfPick.periods).some(k => pdfPick.periods[k])) {
+    pdfPick.periods[view.key] = true;
+  }
+
+  const box = id => '<label class="ck"><input type="checkbox" ' + id + '></label>';
+  const tabRow = ['sales', 'ads'].map(t =>
+    '<label class="ck"><input type="checkbox" data-pt="' + t + '"' +
+    (pdfPick.tabs[t] ? ' checked' : '') + '>' +
+    (t === 'sales' ? 'Sales' : 'Advertising') + '</label>').join('');
+
+  const periodRow = periods.map(function (k) {
+    const p = periodInfo(view.mode, k);
+    return '<label class="ck"><input type="checkbox" data-pp="' + k + '"' +
+      (pdfPick.periods[k] ? ' checked' : '') + '>' +
+      (view.mode === 'week' ? 'W' + k.split('-W')[1] : p.label) + '</label>';
+  }).join('');
+
+  const blockRow = PDF_BLOCKS.map(b =>
+    '<label class="ck"><input type="checkbox" data-pb="' + b.id + '"' +
+    (pdfPick.blocks[b.id] ? ' checked' : '') + '>' + b.t + '</label>').join('');
+
+  document.getElementById('pdfPick').innerHTML =
+    '<h3>Pages</h3><div class="chartpick">' + tabRow + '</div>' +
+    '<h3>' + (view.mode === 'week' ? 'Weeks' : 'Months') + '</h3>' +
+    '<div class="chartpick">' + periodRow + '</div>' +
+    '<h3>On every page</h3><div class="chartpick">' + blockRow + '</div>';
+
+  const wire = (attr, bag) => document.querySelectorAll('#pdfPick input[' + attr + ']')
+    .forEach(function (c) {
+      c.onchange = function () {
+        bag[c.getAttribute(attr)] = c.checked;
+        updatePdfCount();
+      };
+    });
+  wire('data-pt', pdfPick.tabs);
+  wire('data-pp', pdfPick.periods);
+  wire('data-pb', pdfPick.blocks);
+  updatePdfCount();
+}
+
+function pdfPages() {
+  const out = [];
+  const periods = availablePeriods(view.mode).filter(k => pdfPick.periods[k]);
+  periods.forEach(function (k) {
+    ['sales', 'ads'].forEach(function (t) {
+      if (pdfPick.tabs[t]) out.push({ mode: view.mode, key: k, tab: t });
+    });
+  });
+  return out;
+}
+
+function updatePdfCount() {
+  const n = pdfPages().length;
+  const blocks = PDF_BLOCKS.filter(b => pdfPick.blocks[b.id]).length;
+  const btn = document.getElementById('pdfGo');
+  btn.disabled = !n || !blocks;
+  /* One tick is one report, not one sheet of paper — a report with charts and
+     a product table runs to three or four sheets, and saying "2 pages" when
+     seven come out would be a small lie every time. */
+  document.getElementById('pdfCount').textContent = !n
+    ? 'Nothing selected.'
+    : n + (n === 1 ? ' report' : ' reports') + ', each starting on a new sheet — ' +
+      'the print dialog opens, choose “Save as PDF”.';
+}
+
+/** One page of the PDF, snapshotted out of the live report. */
+function pdfPageHtml(page) {
+  const info = periodInfo(page.mode, page.key);
+  const parts = [];
+  const grab = function (sel) {
+    const n = document.querySelector(sel);
+    return n && !n.hidden ? n.outerHTML : '';
+  };
+
+  parts.push('<div class="pdf-head">' + grab('#masthead') + '</div>');
+  PDF_BLOCKS.forEach(function (b) {
+    if (!pdfPick.blocks[b.id]) return;
+    if (b.salesOnly && page.tab !== 'sales') return;
+    if (b.head) parts.push(grab(b.head));
+    parts.push(grab(b.sel));
+  });
+  parts.push('<p class="pdf-foot">' + (DS.brand || 'Brand') + ' · ' +
+    (page.tab === 'ads' ? 'Advertising' : 'Sales') + ' · ' + info.label +
+    ' · prepared by Red-Tail Consulting</p>');
+  return '<section class="pdf-page">' + parts.join('') + '</section>';
+}
+
+async function makePdf() {
+  const pages = pdfPages();
+  if (!pages.length) return;
+
+  const keep = { tab: view.tab, key: view.key, mode: view.mode, open: view.open };
+  view.open = null;
+
+  const html = [];
+  for (const p of pages) {
+    view.mode = p.mode; view.key = p.key; view.tab = p.tab;
+    render();
+    /* let the browser lay the charts out before they are copied */
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+    html.push(pdfPageHtml(p));
+  }
+
+  const doc = document.getElementById('printDoc');
+  doc.innerHTML = html.join('');
+  /* nothing in a printed page is clickable, and the marks and pickers would
+     only be clutter on paper */
+  doc.querySelectorAll('.ibadge, #chartPick, .filters, .ar, #noAsin')
+    .forEach(n => n.remove());
+  doc.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+
+  view.tab = keep.tab; view.key = keep.key; view.mode = keep.mode; view.open = keep.open;
+  render();
+
+  document.body.classList.add('printing');
+  window.print();
+  document.body.classList.remove('printing');
+  doc.innerHTML = '';
+}
+
+function initPdf() {
+  const btn = document.getElementById('togglePdf');
+  btn.onclick = function () {
+    const p = document.getElementById('pdfPanel');
+    p.hidden = !p.hidden;
+    if (!p.hidden) {
+      renderPdfPanel();
+      p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+  document.getElementById('pdfGo').onclick = makePdf;
+}
 
 </script>
 </body></html>
