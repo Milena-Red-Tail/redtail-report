@@ -47,6 +47,37 @@ body{margin:0;background:var(--plane);color:var(--ink);
 .loginbox .lfoot{font-size:.72rem;color:var(--ink-3);margin:30px 0 0;letter-spacing:.06em;
   text-transform:uppercase}
 
+/* A class that sets display beats the hidden attribute's own rule, and the
+   sign-in box and the brand cards both set one. Without this they stay painted
+   underneath the report. */
+[hidden]{display:none!important}
+
+/* ---------- brand index ----------
+   The same band and the same card shadow as a report, so signing in and
+   opening a brand feel like one site rather than two. */
+.hubwrap{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+  padding:0 24px 72px}
+.hub{width:100%;max-width:720px}
+.hub-kicker{margin:0 0 8px;font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;
+  opacity:.78;font-weight:700}
+.bcards{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+.bcard{display:flex;align-items:center;gap:16px;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--ring);border-radius:12px;
+  padding:16px 18px;box-shadow:var(--shadow);transition:transform .12s ease,box-shadow .12s ease}
+.bcard:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(11,11,11,.06),0 16px 34px -20px rgba(11,11,11,.42)}
+.bcard:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.btile{flex:none;width:46px;height:46px;border-radius:11px;display:flex;align-items:center;
+  justify-content:center;color:#F7E9CE;font-weight:800;font-size:.9rem;letter-spacing:.04em}
+.bmain{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.bname{font-weight:700;font-size:1.02rem;letter-spacing:-.01em}
+.bmeta{font-size:.76rem;color:var(--ink-3)}
+.barrow{flex:none;color:var(--ink-3);font-size:1.15rem;line-height:1}
+.bcard:hover .barrow{color:var(--ink)}
+.bcards .empty{font-size:.85rem;color:var(--ink-2);margin:0}
+.hubfoot{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-top:26px;font-size:.72rem;color:var(--ink-3);letter-spacing:.06em;
+  text-transform:uppercase}
+
 /* ---------- masthead ---------- */
 .masthead{background:var(--band);color:var(--band-ink);border-radius:12px;
   padding:24px 28px;margin:20px 0 0;display:flex;align-items:center;
@@ -322,6 +353,8 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 }
 </style>
 
+</head><body>
+
 <div class="loginwrap" id="login" hidden>
   <div class="loginbox">
     <img id="loginLogo" alt="Red-Tail Consulting">
@@ -333,6 +366,24 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
       <p class="logline bad" id="loginMsg" hidden></p>
     </form>
     <p class="lfoot">Red-Tail Consulting</p>
+  </div>
+</div>
+
+<div class="hubwrap" id="brands" hidden>
+  <div class="hub">
+    <div class="masthead" id="hubBand">
+      <div class="mh-l">
+        <p class="hub-kicker">Internal</p>
+        <h1>Brand reports</h1>
+        <p class="mh-sub" id="hubWho"></p>
+      </div>
+      <img class="mh-logo" id="hubLogo" alt="Red-Tail Consulting" hidden>
+    </div>
+    <div class="bcards" id="brandCards"></div>
+    <div class="hubfoot">
+      <span>Private — for the Red-Tail team only · Password-protected</span>
+      <button class="btn" type="button" id="hubOut">Sign out</button>
+    </div>
   </div>
 </div>
 
@@ -362,6 +413,7 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
       <span class="sub" id="roleTag" hidden></span>
       <button class="btn" type="button" id="togglePdf">PDF</button>
       <button class="btn" type="button" id="toggleUpdate">Update data</button>
+      <button class="btn" type="button" id="toBrands" hidden>Brands</button>
       <button class="btn" type="button" id="signOut" hidden>Sign out</button>
     </div>
   </div>
@@ -532,8 +584,7 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 </div>
 <div class="tip" id="tip" role="status"></div>
 <div id="printDoc" aria-hidden="true"></div>
-<script type="application/json" id="dataset">{}</script></head><body>
-
+<script type="application/json" id="dataset">{}</script>
 
 <script>
 /* ===== 09_logo.js ===== */
@@ -2596,6 +2647,126 @@ function render() {
 }
 
 
+/* ===== 12b_brands.js ===== */
+/* ============================================================================
+ *  THE BRAND INDEX — what a Red-Tail person sees after signing in
+ *
+ *  One sign-in, then a card per brand. Opening a card is a real navigation to
+ *  /b/<slug> rather than a swap in place: the report wires up a great deal of
+ *  state on load, and re-running that over a live page is a good way to end up
+ *  with two of everything listening for the same click.
+ * ========================================================================= */
+
+let AUTH = null;                    // { user, role, brand, brands: [...] }
+let BRAND = null;                   // the slug this page is showing, if any
+
+/** /b/heale → 'heale'. Anything else → null. */
+function brandFromPath() {
+  const m = /^\/b\/([a-z0-9][a-z0-9-]*)\/?$/.exec(location.pathname);
+  return m ? m[1] : null;
+}
+
+/* A colour per brand, taken from the slug so it is the same on every device
+   and every reload, and never depends on the order the list happens to be in.
+   The five are far enough apart in hue to be told apart at tile size. */
+const CARD_INKS = ['#7F4B3E', '#2A78D6', '#1BAF7A', '#B4791F', '#7A5AA8', '#C0504A'];
+function slugHash(slug) {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  return h;
+}
+/**
+ * The hash alone put Gozney and Metal Infinity on the same brown, which is
+ * exactly what the colour is there to prevent. So the hash picks a starting
+ * point and the list is walked from there until a free one turns up — a brand
+ * keeps its colour as long as the ones before it do, and no two ever share
+ * until there are more brands than colours.
+ */
+function inkMap(list) {
+  const taken = {}, out = {};
+  list.forEach(function (b) {
+    const start = slugHash(b.slug) % CARD_INKS.length;
+    for (let k = 0; k < CARD_INKS.length; k++) {
+      const c = CARD_INKS[(start + k) % CARD_INKS.length];
+      if (!taken[c]) { taken[c] = 1; out[b.slug] = c; return; }
+    }
+    out[b.slug] = CARD_INKS[start];
+  });
+  return out;
+}
+
+/** The initials on the tile: two letters, from the words in the name. */
+function brandMark(name) {
+  const words = String(name || '?').trim().split(/[\s-]+/).filter(Boolean);
+  if (words.length > 1) return (words[0][0] + words[1][0]).toUpperCase();
+  return String(name || '?').slice(0, 2).toUpperCase();
+}
+
+/* Brand names and people's names come from environment variables that Milena
+   types, not from anything hostile — but they land in innerHTML, and a stray
+   ampersand should not be able to break the page either. */
+function htmlSafe(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/** "2026-08-27 14:02" → "27 Aug 2026". */
+function stampDay(s) {
+  const d = fromKey(String(s).slice(0, 10));
+  if (!d || isNaN(d)) return String(s);
+  return d.getDate() + ' ' + DMON[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function brandCard(b, ink) {
+  const when = b.savedAt
+    ? 'Updated ' + stampDay(b.savedAt) +
+      (b.savedBy ? ' by ' + htmlSafe(b.savedBy) : '')
+    : 'No data uploaded yet';
+  return '<a class="bcard" href="/b/' + htmlSafe(b.slug) + '">' +
+    '<span class="btile" style="background:' + ink + '">' +
+    htmlSafe(brandMark(b.name)) + '</span>' +
+    '<span class="bmain"><span class="bname">' + htmlSafe(b.name) + '</span>' +
+    '<span class="bmeta">' + when + '</span></span>' +
+    '<span class="barrow" aria-hidden="true">&rarr;</span></a>';
+}
+
+function showBrands() {
+  document.getElementById('login').hidden = true;
+  document.getElementById('app').hidden = true;
+  const hub = document.getElementById('brands');
+  hub.hidden = false;
+
+  /* the hub wears the same band as the reports, so the two feel like one site */
+  const paint = bandPaint(BAND_DEFAULT, 92);
+  const band = document.getElementById('hubBand');
+  band.style.background = paint.background;
+  band.style.color = paint.color;
+  const logo = document.getElementById('hubLogo');
+  /* the cream wordmark goes with the cream ink, whichever way the band fell */
+  logo.src = paint.color.toLowerCase() === '#f7e9ce' ? LOGO_ON_DARK : LOGO_ON_LIGHT;
+  logo.hidden = false;
+
+  const list = (AUTH && AUTH.brands) || [];
+  document.getElementById('hubWho').textContent =
+    'Signed in as ' + ((AUTH && AUTH.user) || 'team') + ' · ' +
+    list.length + ' brand' + (list.length === 1 ? '' : 's');
+  const inks = inkMap(list);
+  document.getElementById('brandCards').innerHTML =
+    list.length ? list.map(b => brandCard(b, inks[b.slug])).join('')
+      : '<p class="empty">No brands are set up yet. Add them to the ' +
+        '<b>BRANDS</b> variable in Netlify.</p>';
+
+  document.getElementById('hubOut').onclick = signOut;
+}
+
+async function signOut() {
+  try { await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }); }
+  catch (e) { /* signing out locally is still worth doing */ }
+  location.href = '/';
+}
+
+
 /* ===== 13_update.js ===== */
 /* ============================================================================
  *  UPDATE PANEL — drop files in, get a new copy of the page out
@@ -2855,10 +3026,8 @@ function initUpdate() {
 
   document.getElementById('exportBtn').onclick = exportSite;
   document.getElementById('saveBtn').onclick = saveToSite;
-  document.getElementById('signOut').onclick = async function () {
-    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
-    location.reload();
-  };
+  document.getElementById('signOut').onclick = signOut;
+  document.getElementById('toBrands').onclick = function () { location.href = '/'; };
 
   /* A mid-tone band carries no readable text; say so rather than shipping a
      header the brand cannot read. */
@@ -2958,15 +3127,15 @@ async function saveToSite() {
   btn.textContent = 'Saving…';
   try {
     const body = await gzipString(JSON.stringify(DS));
-    const res = await fetch('/api/save', {
+    const res = await fetch('/api/save?brand=' + encodeURIComponent(BRAND || ''), {
       method: 'POST', credentials: 'same-origin', body: body,
       headers: { 'x-report-write': '1', 'x-report-gzip':
         typeof CompressionStream === 'undefined' ? '0' : '1' },
     });
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(out.error || ('save failed (' + res.status + ')'));
-    logLine('ok', 'Saved to the site at ' + out.savedAt + ' — it is live now, ' +
-      'no deploy needed.');
+    logLine('ok', 'Saved to the site at ' + out.savedAt +
+      (out.savedBy ? ' by ' + out.savedBy : '') + ' — it is live now, no deploy needed.');
     document.getElementById('exportBtn').disabled = false;
   } catch (err) {
     logLine('bad', 'Could not save: ' + err.message +
@@ -2990,9 +3159,16 @@ function applyRole() {
   }
   document.getElementById('toggleUpdate').hidden = !admin;
   document.getElementById('signOut').hidden = MODE !== 'server';
+  /* Only worth a button when there is somewhere else to go. */
+  document.getElementById('toBrands').hidden =
+    !(MODE === 'server' && AUTH && (AUTH.brands || []).length > 1);
   const tag = document.getElementById('roleTag');
   tag.hidden = MODE !== 'server';
-  tag.textContent = admin ? 'Signed in' : 'View only';
+  /* The team sees whose session this is — the same name that gets stamped on
+     the save. The brand already has its own name in the masthead, so what it
+     needs told is that it cannot change anything. */
+  tag.textContent = !admin ? 'View only'
+    : (AUTH && AUTH.user ? AUTH.user : 'Signed in');
   const save = document.getElementById('saveBtn');
   save.hidden = MODE !== 'server';
   document.getElementById('saveHint').textContent = MODE === 'server'
@@ -3021,21 +3197,31 @@ function showLogin() {
       });
       const out = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(out.error || 'Sign-in failed.');
-      document.getElementById('login').hidden = true;
-      document.getElementById('app').hidden = false;
-      await loadFromSite();
+      /* A brand password lands on that brand; a team password lands wherever
+         the address bar was pointing, which is the cards page by default.
+         Reloading rather than swapping in place means the page wires itself
+         up exactly once, the same way it does on every later visit. */
+      location.href = out.brand ? '/b/' + out.brand
+        : (brandFromPath() ? location.pathname : '/');
     } catch (err) {
       msg.textContent = err.message;
       msg.hidden = false;
       document.getElementById('loginPw').value = '';
+      btn.disabled = false;
     }
-    btn.disabled = false;
   };
   document.getElementById('loginPw').focus();
 }
 
-async function loadFromSite() {
-  const res = await fetch('/api/data', { credentials: 'same-origin' });
+/** Fetch one brand's dataset and draw the report. */
+async function openBrand(slug) {
+  BRAND = slug;
+  document.getElementById('login').hidden = true;
+  document.getElementById('brands').hidden = true;
+  document.getElementById('app').hidden = false;
+  const res = await fetch('/api/data?brand=' + encodeURIComponent(slug),
+    { credentials: 'same-origin' });
+  if (!res.ok) { location.href = '/'; return; }
   const out = await res.json();
   ROLE = out.role || 'viewer';
   begin(out.dataset || emptyDataset());
@@ -3056,7 +3242,11 @@ function begin(ds) {
   document.getElementById('exportBtn').disabled = MODE === 'file';
 }
 
-/* ---------- boot ---------- */
+/* ---------- boot ----------
+ * Three destinations, decided in this order: the sign-in screen if the site
+ * is live and this browser has no session; a single brand's report if the
+ * address names one or the session only has one; otherwise the cards.
+ */
 (async function boot() {
   let embedded = null;
   try { embedded = JSON.parse(document.getElementById('dataset').textContent); }
@@ -3067,22 +3257,27 @@ function begin(ds) {
      would log a CORS failure on every open. */
   let res = null;
   if (location.protocol !== 'file:') {
-    try { res = await fetch('/api/data', { credentials: 'same-origin' }); }
+    try { res = await fetch('/api/session', { credentials: 'same-origin' }); }
     catch (e) { res = null; }
   }
-
   const isJson = res && /json/.test(res.headers.get('content-type') || '');
+
   if (res && res.status === 401) {
-    /* the functions are live and this browser has no session */
     MODE = 'server';
     showLogin();
     return;
   }
   if (res && res.ok && isJson) {
     MODE = 'server';
-    const out = await res.json();
-    ROLE = out.role || 'viewer';
-    begin(out.dataset || emptyDataset());
+    AUTH = await res.json();
+    const mine = (AUTH && AUTH.brands) || [];
+    let slug = brandFromPath();
+    /* an address for a brand this session may not open is not an error worth
+       a page about — it is simply not one of yours */
+    if (slug && !mine.some(b => b.slug === slug)) slug = null;
+    if (!slug && mine.length === 1) slug = mine[0].slug;
+    if (slug) await openBrand(slug);
+    else showBrands();
     return;
   }
   /* no functions here — this is the single-file copy */
