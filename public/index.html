@@ -1,0 +1,3046 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Heale Dashboard</title>
+<style>
+:root{
+  --plane:#F5F6F8; --surface:#FCFCFB; --surface-2:#EFF1F3;
+  --ink:#0B0B0B; --ink-2:#52514E; --ink-3:#898781;
+  --grid:#E1E0D9; --axis:#C3C2B7; --ring:rgba(11,11,11,.10);
+  --s1:#2A78D6; --s2:#EB6834; --s3:#1BAF7A;
+  --good:#0CA30C; --warn:#FAB219; --crit:#D03B3B; --good-ink:#006300;
+  --shadow:0 1px 2px rgba(11,11,11,.04), 0 10px 28px -20px rgba(11,11,11,.30);
+  --band:#7F4B3E; --band-ink:#F7E9CE;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --plane:#0D0D0D; --surface:#1A1A19; --surface-2:#232322;
+  --ink:#FFFFFF; --ink-2:#C3C2B7; --ink-3:#898781;
+  --grid:#2C2C2A; --axis:#383835; --ring:rgba(255,255,255,.10);
+  --s1:#3987E5; --s2:#D95926; --s3:#199E70;
+  --good:#0CA30C; --warn:#FAB219; --crit:#D03B3B; --good-ink:#0CA30C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.8);
+}}
+:root[data-theme="dark"]{
+  --plane:#0D0D0D; --surface:#1A1A19; --surface-2:#232322;
+  --ink:#FFFFFF; --ink-2:#C3C2B7; --ink-3:#898781;
+  --grid:#2C2C2A; --axis:#383835; --ring:rgba(255,255,255,.10);
+  --s1:#3987E5; --s2:#D95926; --s3:#199E70;
+  --good:#0CA30C; --warn:#FAB219; --crit:#D03B3B; --good-ink:#0CA30C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -20px rgba(0,0,0,.8);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--plane);color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15px;line-height:1.5;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 72px}
+
+/* ---------- masthead ---------- */
+.masthead{background:var(--band);color:var(--band-ink);border-radius:12px;
+  padding:24px 28px;margin:20px 0 0;display:flex;align-items:center;
+  justify-content:space-between;gap:24px;flex-wrap:wrap;box-shadow:var(--shadow);
+  border:1px solid var(--ring)}
+.masthead h1{font-size:2.05rem;font-weight:800;letter-spacing:.03em;margin:0;
+  line-height:1.02;text-transform:uppercase}
+.mh-sub{margin:7px 0 0;font-size:.9rem;opacity:.92;letter-spacing:.01em}
+.mh-stamp{margin:3px 0 0;font-size:.74rem;opacity:.72}
+.mh-logo{max-height:76px;max-width:250px;display:block;flex:none}
+@media(max-width:600px){.masthead{padding:18px 20px}.masthead h1{font-size:1.6rem}}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:20;background:var(--plane);
+  border-bottom:1px solid var(--grid);padding:14px 0 0;margin-bottom:22px}
+.sub{font-size:.8rem;color:var(--ink-3)}
+.topbar{padding-bottom:14px}
+.navrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.modes{display:inline-flex;background:var(--surface-2);border:1px solid var(--ring);
+  border-radius:999px;padding:3px;gap:2px;flex:none}
+.mbtn{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:.82rem;
+  font-weight:600;padding:6px 16px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.mbtn[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.mbtn:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+/* the period picker keeps the look of the pill it replaced, with the list
+   left to the browser so 50 weeks scroll properly and phones get their own */
+.psel{appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  font:inherit;font-size:.83rem;font-weight:600;color:#fff;
+  padding:7px 34px 7px 16px;border-radius:999px;border:1px solid var(--s1);
+  background-color:var(--s1);
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%23fff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;
+  cursor:pointer;max-width:280px;text-overflow:ellipsis}
+.psel:hover{filter:brightness(1.06)}
+.psel:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.psel option,.psel optgroup{background:var(--surface);color:var(--ink);font-weight:600}
+
+/* ---------- kpi ---------- */
+/* Six tiles, one row. Both tabs carry exactly six. */
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:24px}
+@media(max-width:1080px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--ring);border-radius:10px;
+  padding:13px 14px;box-shadow:var(--shadow);min-width:0}
+.kpi .lab{font-size:.64rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);display:block;margin-bottom:7px;line-height:1.25;min-height:2.5em}
+.kpi .val{font-size:1.44rem;font-weight:700;line-height:1.05;display:block;letter-spacing:-.02em}
+.kpi .note{font-size:.7rem;color:var(--ink-2);margin-top:6px;display:block;line-height:1.35}
+.deltas{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.dl{font-size:.7rem;font-variant-numeric:tabular-nums;display:flex;gap:5px;align-items:baseline;
+  white-space:nowrap}
+.dl em{font-style:normal;color:var(--ink-3);font-size:.92em}
+.headright{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tabs{display:inline-flex;gap:2px;background:var(--surface-2);border:1px solid var(--ring);
+  border-radius:999px;padding:3px}
+.tab{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:.82rem;
+  font-weight:700;padding:6px 18px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--s1);color:#fff}
+.tab:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.up{color:var(--good-ink);font-weight:700}
+.down{color:var(--crit);font-weight:700}
+.flat{color:var(--ink-3);font-weight:600}
+
+/* headroom meter */
+.meter{height:9px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:10px;
+  border:1px solid var(--ring)}
+.meter span{display:block;height:100%;background:var(--s1)}
+
+/* ---------- cards and charts ---------- */
+.chartpick{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:0 0 14px}
+.ck{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--ring);border-radius:999px;
+  padding:5px 13px 5px 10px;cursor:pointer;user-select:none;white-space:nowrap}
+.ck:hover{background:var(--surface-2)}
+.ck input{margin:0;accent-color:var(--s1);cursor:pointer;width:13px;height:13px}
+.ck:has(input:checked){border-color:var(--s1);color:var(--ink)}
+.ckall{display:inline-flex;gap:6px;margin-left:6px}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+@media(max-width:840px){.charts{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:10px;
+  padding:16px 18px 10px;box-shadow:var(--shadow)}
+.card h2{font-size:.95rem;font-weight:700;margin:0 0 2px}
+.card .cap{font-size:.76rem;color:var(--ink-3);margin:0 0 12px}
+.sechead{font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin:28px 0 10px}
+.chartdelta{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 8px;font-size:.76rem;
+  font-variant-numeric:tabular-nums}
+.chartdelta span{display:inline-flex;gap:5px;align-items:baseline}
+.chartdelta em{font-style:normal;color:var(--ink-3)}
+.legend{display:flex;gap:16px;font-size:.76rem;color:var(--ink-2);margin:0 0 8px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.gl{stroke:var(--grid);stroke-width:1}
+.bl{stroke:var(--axis);stroke-width:1}
+.tick{font-size:10px;fill:var(--ink-3);font-variant-numeric:tabular-nums}
+.hit{fill:transparent;cursor:pointer}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--plane);
+  font-size:.76rem;padding:7px 10px;border-radius:6px;opacity:0;transition:opacity .1s;
+  z-index:50;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tip.wide{white-space:normal;max-width:min(380px,86vw);line-height:1.5;padding:10px 13px}
+.tip.wide b{color:#fff}
+:root[data-theme="light"] .tip.wide b{color:var(--plane)}
+
+/* the exclamation and question marks that replaced the wall of prose */
+.ibadge{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;
+  border-radius:50%;border:1px solid var(--ring);background:var(--surface-2);color:var(--ink-3);
+  font:inherit;font-size:.68rem;font-weight:800;cursor:help;padding:0;margin-left:7px;
+  vertical-align:middle;line-height:1;flex:none}
+.ibadge:hover{background:var(--ink);color:var(--plane);border-color:var(--ink)}
+.ibadge.warn{background:color-mix(in srgb,var(--warn) 32%,transparent);color:#7a5400;
+  border-color:color-mix(in srgb,var(--warn) 60%,transparent)}
+.ibadge.warn:hover{background:var(--warn);color:#2b1d00;border-color:var(--warn)}
+:root[data-theme="dark"] .ibadge.warn{color:var(--warn)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ibadge.warn{color:var(--warn)}}
+.ibadge:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+
+/* ---------- comparison ---------- */
+#cmpCard{margin-bottom:24px}
+table.cmp{border-collapse:collapse;width:100%;min-width:660px;font-size:.85rem;margin-bottom:8px}
+table.cmp th,table.cmp td{text-align:right;padding:8px 14px;border-bottom:1px solid var(--grid);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cmp th:first-child,table.cmp td:first-child{text-align:left;white-space:normal}
+table.cmp thead th{font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);font-weight:700;background:var(--surface-2)}
+table.cmp td.big{font-weight:700;font-size:1rem}
+table.cmp tbody tr:hover{background:var(--surface-2)}
+
+/* ---------- product table ---------- */
+.tablewrap{background:var(--surface);border:1px solid var(--ring);border-radius:10px;
+  box-shadow:var(--shadow);overflow:hidden}
+.thead{padding:16px 18px 12px}
+.theadrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.thead h2{font-size:.95rem;font-weight:700;margin:0}
+.thead .cap{font-size:.76rem;color:var(--ink-3);margin:6px 0 0;max-width:86ch}
+.warnline{border-left:3px solid var(--warn);padding:6px 10px!important;background:var(--plane);
+  border-radius:0 6px 6px 0;color:var(--ink-2)!important}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);font:inherit;
+  font-size:.76rem;font-weight:600;padding:5px 11px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
+.chip:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:.85rem}
+th,td{text-align:right;padding:9px 14px;border-bottom:1px solid var(--grid);
+  font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+  font-weight:700;background:var(--surface-2);cursor:pointer;user-select:none;white-space:nowrap}
+thead th:hover{color:var(--ink)}
+thead th .ar{opacity:.45;font-size:.7em}
+thead th .ibadge{width:14px;height:14px;font-size:.6rem;margin-left:5px;text-transform:none}
+td.cell{cursor:pointer}
+td.cell:hover{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--ring)}
+tbody tr.on{background:var(--surface-2)}
+td.picked{box-shadow:inset 0 0 0 2px var(--s1);border-radius:4px}
+.pname{font-weight:600}
+.grp{font-size:.72rem;color:var(--ink-3);display:block}
+.badge{display:inline-block;font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:999px;
+  letter-spacing:.03em}
+.b-good{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good-ink)}
+.b-warn{background:color-mix(in srgb,var(--warn) 22%,transparent);color:#7a5400}
+.b-crit{background:color-mix(in srgb,var(--crit) 14%,transparent);color:var(--crit)}
+:root[data-theme="dark"] .b-warn{color:var(--warn)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .b-warn{color:var(--warn)}}
+tr.detail td{background:var(--plane);padding:0}
+tr.detail:hover td{background:var(--plane)}
+.det{padding:16px 18px 20px}
+.det h3{margin:0;font-size:.85rem;font-weight:700}
+.dethead{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  flex-wrap:wrap;margin-bottom:12px}
+.detfacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;
+  margin-bottom:14px}
+.det svg{max-width:100%}
+.det .cap{font-size:.72rem;color:var(--ink-3);margin:8px 0 0;max-width:90ch}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.dcell{background:var(--surface);border:1px solid var(--ring);border-radius:8px;padding:10px 12px}
+.dcell b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.dcell b .up,.dcell b .down,.dcell b .flat{font-size:.72rem}
+.dcell span{font-size:.68rem;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
+.foot{margin-top:26px;font-size:.76rem;color:var(--ink-3);line-height:1.7}
+.tot td{font-weight:700;background:var(--surface-2);border-top:2px solid var(--axis)}
+</style>
+
+<style>
+.topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.btn{border:1px solid var(--ring);background:var(--surface);color:var(--ink);font:inherit;
+  font-size:.82rem;font-weight:600;padding:8px 15px;border-radius:8px;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.btn.primary{background:var(--s1);border-color:var(--s1);color:#fff}
+.btn.primary:disabled{opacity:.45;cursor:not-allowed}
+.btn.tiny{font-size:.74rem;padding:4px 10px;border-radius:999px}
+.panel{background:var(--surface);border:1px solid var(--ring);border-radius:10px;
+  box-shadow:var(--shadow);padding:20px 22px;margin:0 0 24px}
+.panel h2{font-size:1rem;font-weight:700;margin:0 0 4px}
+.panel .cap{font-size:.8rem;color:var(--ink-3);margin:0 0 16px;max-width:70ch}
+.drop{border:2px dashed var(--axis);border-radius:10px;padding:26px 20px;text-align:center;
+  cursor:pointer;background:var(--plane);transition:border-color .12s,background .12s}
+.drop:hover,.drop.over{border-color:var(--s1);background:var(--surface-2)}
+.drop b{display:block;font-size:.95rem;margin-bottom:4px}
+.drop span{font-size:.78rem;color:var(--ink-3)}
+.drop:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+.prow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0 0;
+  font-size:.82rem;color:var(--ink-2)}
+.rangebox{margin:16px 0 0;padding:14px 16px;border:1px solid var(--ring);border-radius:10px;
+  background:var(--plane)}
+.rangebox > b{font-size:.82rem;display:block;margin-bottom:2px}
+.rangebox .why{font-size:.78rem;color:var(--ink-3);margin:0 0 12px;max-width:74ch}
+.rangebox .prow{margin-top:10px}
+#rangeEcho{font-size:.8rem;color:var(--ink-2);display:block;margin-top:10px}
+select,input[type=date]{font:inherit;font-size:.82rem;padding:6px 9px;border-radius:7px;
+  border:1px solid var(--ring);background:var(--surface);color:var(--ink)}
+.logline{font-size:.8rem;margin:0 0 6px;padding:7px 10px;border-radius:6px;
+  border-left:3px solid var(--axis);background:var(--plane)}
+.logline.ok{border-left-color:var(--good);color:var(--ink-2)}
+.logline.warn{border-left-color:var(--warn);color:var(--ink-2)}
+.logline.bad{border-left-color:var(--crit);color:var(--crit)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.cols h3{font-size:.7rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 8px}
+input[type=password],input[type=text],input[type=number]{font:inherit;font-size:.85rem;
+  padding:8px 11px;border-radius:8px;border:1px solid var(--ring);background:var(--surface);
+  color:var(--ink)}
+input[type=password]{width:220px}
+input[type=color]{width:44px;height:31px;padding:2px;border:1px solid var(--ring);
+  border-radius:7px;background:var(--surface);cursor:pointer}
+input[type=range]{accent-color:var(--s1);cursor:pointer}
+.kpi .lab .ibadge{width:15px;height:15px;font-size:.62rem;margin-left:5px}
+.empty{text-align:center;padding:70px 20px;color:var(--ink-3)}
+.empty b{display:block;font-size:1.1rem;color:var(--ink);margin-bottom:8px}
+.hist{display:flex;gap:3px;align-items:flex-end;height:120px}
+.hb{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+  gap:4px;min-width:26px}
+.hv{font-size:.6rem;color:var(--ink-3);height:12px}
+.hbar{width:100%;max-width:22px;border-radius:3px 3px 0 0;display:block}
+.hl{font-size:.58rem;color:var(--ink-3);white-space:nowrap}
+.sub2{text-transform:none!important;letter-spacing:0!important}
+@media print{
+  header{position:static}
+  header,.btn,#updatePanel,#modes,.psel,#tabs,#chartPick{display:none!important}
+  .masthead{margin-top:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .card,.kpi,.tablewrap{break-inside:avoid;box-shadow:none}
+  .charts{grid-template-columns:1fr 1fr}
+}
+</style>
+
+<div class="wrap" id="login" hidden>
+  <div class="masthead" id="loginBand">
+    <div class="mh-l">
+      <h1 id="loginBrand">Report</h1>
+      <p class="mh-sub">Private — sign in to continue</p>
+    </div>
+    <img class="mh-logo" id="loginLogo" alt="">
+  </div>
+  <form class="panel" id="loginForm" style="max-width:420px;margin:22px auto 0">
+    <h2>Sign in</h2>
+    <p class="cap">This report is not public. Nothing is loaded into the page until
+      the password is accepted.</p>
+    <input type="password" id="loginPw" placeholder="Password" autocomplete="current-password"
+           style="width:100%;margin-bottom:12px">
+    <button class="btn primary" type="submit" id="loginBtn" style="width:100%">Sign in</button>
+    <p class="logline bad" id="loginMsg" hidden></p>
+  </form>
+</div>
+
+<div class="wrap" id="app">
+<div class="masthead" id="masthead">
+  <div class="mh-l">
+    <h1 id="brandName">Brand</h1>
+    <p class="mh-sub" id="mhSub"></p>
+    <p class="mh-stamp" id="stamp"></p>
+  </div>
+  <img class="mh-logo" id="mhLogo" alt="" hidden>
+</div>
+<header>
+  <div class="topbar">
+    <div class="navrow">
+      <div class="tabs" id="tabs" role="tablist" aria-label="Report">
+        <button class="tab" type="button" role="tab" data-t="sales" aria-selected="true">Sales</button>
+        <button class="tab" type="button" role="tab" data-t="ads" aria-selected="false">Advertising</button>
+      </div>
+      <div class="modes" id="modes" role="group" aria-label="Monthly or weekly view">
+        <button class="mbtn" type="button" data-m="month" aria-pressed="true">Monthly</button>
+        <button class="mbtn" type="button" data-m="week" aria-pressed="false">Weekly</button>
+      </div>
+      <select class="psel" id="periodSel" aria-label="Select period"></select>
+    </div>
+    <div class="headright">
+      <span class="sub" id="roleTag" hidden></span>
+      <button class="btn" type="button" id="toggleUpdate">Update data</button>
+      <button class="btn" type="button" id="signOut" hidden>Sign out</button>
+    </div>
+  </div>
+</header>
+
+<section class="panel" id="updatePanel" hidden>
+  <h2>Update data</h2>
+  <p class="cap">Files are read here in your browser and folded into this page. Nothing is
+     uploaded anywhere. When you are done, download the new page and publish it.</p>
+
+  <div id="gate">
+    <form id="gateForm" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="password" id="pass" placeholder="Passphrase" autocomplete="off">
+      <button class="btn primary" type="submit">Unlock</button>
+      <span class="sub" id="gateMsg"></span>
+    </form>
+  </div>
+
+  <div id="unlocked" hidden>
+    <div class="rangebox">
+      <b>Dates the by-ASIN export covers</b>
+      <p class="why">Amazon's Detail Page Sales and Traffic export contains no dates anywhere
+        inside it, so this is the only place the page can learn what it is looking at. Set it
+        <em>before</em> dropping that file. Any span works — a half month, a single week, a
+        single day. Nothing else on the page needs this; the daily export carries its own dates.</p>
+      <div class="prow" id="quick">
+        <button class="btn tiny" type="button" data-q="data">Month to newest day</button>
+        <button class="btn tiny" type="button" data-q="mtd">Month to today</button>
+        <button class="btn tiny" type="button" data-q="thismonth">This whole month</button>
+        <button class="btn tiny" type="button" data-q="lastmonth">Last month</button>
+        <button class="btn tiny" type="button" data-q="lastweek">Last week</button>
+        <button class="btn tiny" type="button" data-q="thisweek">This week</button>
+      </div>
+      <div class="prow">
+        <label for="pFrom">From</label><input type="date" id="pFrom">
+        <label for="pTo">to</label><input type="date" id="pTo">
+      </div>
+      <span id="rangeEcho"></span>
+    </div>
+
+    <div class="drop" id="drop" tabindex="0" role="button"
+         aria-label="Choose or drop report files">
+      <b>Drop the Amazon exports here</b>
+      <span>Sales and Traffic · Detail Page by ASIN · All Orders · Intentwise campaigns · cost, fees and plan<br>
+        or an earlier <b>index.html</b> of this page, to take its history across<br>
+        or a <b>logo</b> for the masthead</span>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".csv,.txt,.xlsx,.xlsm,.html,.png,.jpg,.jpeg,.svg,.webp" hidden>
+
+    <div class="rangebox">
+      <b>Masthead — the band at the top of the page</b>
+      <p class="why">This is the part that changes per brand. Everything else on the page is
+        the same for any of them.</p>
+      <div class="prow">
+        <label for="brandIn">Brand</label>
+        <input type="text" id="brandIn" placeholder="Brand" style="width:150px;font-size:.82rem;padding:6px 9px">
+        <label for="titleIn">Report title</label>
+        <input type="text" id="titleIn" placeholder="Amazon Performance Report"
+               style="width:210px;font-size:.82rem;padding:6px 9px">
+        <label for="bandIn">Band colour</label>
+        <input type="color" id="bandIn" value="#7F4B3E" aria-label="Band colour">
+        <label for="bandAlpha">Opacity</label>
+        <input type="range" id="bandAlpha" min="85" max="100" step="1" value="92"
+               style="width:120px" aria-label="Band opacity">
+        <button class="btn tiny" type="button" id="bandReset">Reset</button>
+      </div>
+      <span class="sub" id="bandMsg" style="display:block;margin-top:8px"></span>
+      <div class="prow">
+        <span>Logo — drop a PNG or SVG in with the reports. Transparent background works best;
+          it is scaled to 120px tall and stored inside the page.</span>
+        <button class="btn tiny" type="button" id="logoReset">Use the Red-Tail logo</button>
+        <button class="btn tiny" type="button" id="logoClear">No logo</button>
+      </div>
+    </div>
+
+    <div class="prow">
+      <label for="tzIn">Marketplace timezone — the All Orders file is stamped in UTC and has to
+        be counted in the marketplace's own day:</label>
+      <select id="tzIn">
+        <option value="America/Los_Angeles">Amazon.com — Pacific</option>
+        <option value="Europe/London">Amazon.co.uk — London</option>
+        <option value="Europe/Berlin">Amazon.de — Berlin</option>
+        <option value="Europe/Paris">Amazon.fr — Paris</option>
+        <option value="Europe/Madrid">Amazon.es — Madrid</option>
+        <option value="Europe/Rome">Amazon.it — Rome</option>
+        <option value="Asia/Tokyo">Amazon.co.jp — Tokyo</option>
+        <option value="Australia/Sydney">Amazon.com.au — Sydney</option>
+      </select>
+    </div>
+
+    <div class="prow">
+      <span>FBM shipping cost per unit — used where Amazon charges no FBA fee:</span>
+      <input type="number" id="fbmCost" step="0.01" min="0" placeholder="0.00"
+             style="width:90px;font-size:.82rem;padding:6px 9px">
+    </div>
+
+    <div class="cols">
+      <div><h3>This session</h3><div id="log"></div></div>
+      <div><h3>Checks</h3><div id="checks"></div></div>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn primary" type="button" id="saveBtn" hidden>Save to the site</button>
+      <button class="btn" type="button" id="exportBtn">Download updated page</button>
+      <span class="sub" id="saveHint">then drag it onto Netlify</span>
+    </div>
+  </div>
+</section>
+
+<div class="empty" id="emptyState" hidden>
+  <b>No data yet</b>
+  Open <em>Update data</em> and drop this week's exports in.
+</div>
+
+<div id="reportBody">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card" id="cmpCard">
+    <h2 id="cmpTitle">Comparison</h2>
+    <div class="scroll">
+      <table class="cmp"><thead><tr id="cmpHead"></tr></thead><tbody id="cmpRows"></tbody></table>
+    </div>
+  </div>
+
+  <h2 class="sechead" id="chartsHead">Trends</h2>
+  <div class="chartpick" id="chartPick" role="group" aria-label="Which charts to show"></div>
+  <div class="charts" id="chartGrid"></div>
+
+  <div class="tablewrap" id="tablewrap">
+    <div class="thead">
+      <div class="theadrow">
+        <h2 id="tableTitle">Products</h2>
+        <div class="filters" id="groupFilters" role="group" aria-label="Filter by product line"></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <table><thead><tr id="headRow"></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+  </div>
+  <div class="empty" id="noAsin" hidden></div>
+
+  <div class="empty" id="adsNote" hidden>
+    <b>Advertising has no product breakdown here</b>
+    The Intentwise export is one row per metric per day, with no ASIN in it. Per-product
+    advertising would need the Sponsored Products placement or advertised-product report.
+  </div>
+
+  <p class="foot"><b>Conversion</b> is orders per session — Amazon's order-item session
+    percentage. Subscribe &amp; Save orders arrive without a session, so it runs a little high.
+    Margin = price &minus; landed cost &minus; referral fee &minus; fulfilment, before
+    advertising, storage and refunds. Traffic is de-duplicated: Amazon repeats one ASIN's
+    sessions down each of its SKU rows. Weeks run Sunday to Saturday, matching Seller Central.
+    An unfinished period is compared only against the same number of days in the periods it is
+    measured against.</p>
+</div>
+</div>
+<div class="tip" id="tip" role="status"></div>
+<script type="application/json" id="dataset">{}</script></head><body>
+
+
+<script>
+/* ===== 09_logo.js ===== */
+/* The Red-Tail lockup, built in so every brand report carries it without
+   fetching anything. Two versions of the same artwork: the wordmark is drawn
+   near-black and vanishes on a dark band, so a cream copy is used whenever
+   the band needs light text. In both, the hairline weight of "consulting"
+   is dilated — at header size the original strokes had nothing to show. A
+   logo dropped in by hand replaces both. */
+const LOGO_ON_LIGHT = 'data:image/png;base64,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';
+const LOGO_ON_DARK  = 'data:image/png;base64,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';
+
+
+/* ===== 10_ingest.js ===== */
+/* ============================================================================
+ *  INGEST — reads the three Amazon exports plus the config files.
+ *
+ *  Everything runs in the browser. Nothing is uploaded anywhere: the file is
+ *  read locally, merged into the dataset this page carries, and the page then
+ *  writes a new copy of itself. Landed cost never leaves the machine until you
+ *  choose to publish.
+ * ========================================================================= */
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* ---------- tiny helpers ---------- */
+function toNum(v) {
+  if (v == null || v === '') return 0;
+  if (typeof v === 'number') return isFinite(v) ? v : 0;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+  return isFinite(n) ? n : 0;
+}
+function toPct(v) {                       // "25.45%" -> 0.2545 ; 25.45 -> 0.2545
+  if (v == null || v === '') return null;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+  if (!isFinite(n)) return null;
+  return String(v).indexOf('%') >= 0 || n > 1.5 ? n / 100 : n;
+}
+const pad2 = n => (n < 10 ? '0' : '') + n;
+const dayKey = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+const fromKey = k => { const p = String(k).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); };
+const addDays = (d, n) => {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() + n);
+  return x;
+};
+/* Whole days between two day keys. Rounding absorbs the hour a daylight-saving
+   change adds or removes somewhere in the middle. */
+const daysBetween = (a, b) => Math.round((fromKey(b) - fromKey(a)) / 86400000);
+
+/* ---------- weeks ----------
+ * Sunday to Saturday, matching Amazon's Business Report calendar. Week 1 is
+ * the week containing 1 January, and a week belongs to the year its Saturday
+ * falls in — so 28 Dec 2025 to 3 Jan 2026 is week 1 of 2026, and week 33 of
+ * 2026 is 9-15 August, which is what Seller Central shows. */
+function weekStartOf(d) {
+  const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  x.setDate(x.getDate() - x.getDay());
+  return x;
+}
+const weekYearOf = ws => addDays(ws, 6).getFullYear();
+const firstWeekStart = y => weekStartOf(new Date(y, 0, 1));
+function weekNumberOf(ws) {
+  return Math.round((ws - firstWeekStart(weekYearOf(ws))) / 604800000) + 1;
+}
+function weeksInYear(y) {
+  let n = 0, ws = firstWeekStart(y);
+  while (weekYearOf(ws) === y) { n++; ws = addDays(ws, 7); }
+  return n;
+}
+const weekKeyOf = d => { const ws = weekStartOf(d);
+  return weekYearOf(ws) + '-W' + pad2(weekNumberOf(ws)); };
+
+const DMON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/** "9–15 Aug 2026", or "28 Dec 2025 – 3 Jan 2026" when it straddles. */
+function rangeLabel(from, to) {
+  const a = fromKey(from), b = fromKey(to);
+  const same = a.getFullYear() === b.getFullYear();
+  const sameM = same && a.getMonth() === b.getMonth();
+  if (sameM) return a.getDate() + '–' + b.getDate() + ' ' + DMON[a.getMonth()] + ' ' + a.getFullYear();
+  const one = d => d.getDate() + ' ' + DMON[d.getMonth()] + (same ? '' : ' ' + d.getFullYear());
+  return one(a) + ' – ' + b.getDate() + ' ' + DMON[b.getMonth()] + ' ' + b.getFullYear();
+}
+
+const MARKET_TZ = 'America/Los_Angeles';
+/**
+ * The All Orders report stamps every row in UTC, while every Business Report
+ * counts days in the marketplace's own timezone. Left alone, a fifth of each
+ * evening's orders land on the wrong day: matched against the real file, raw
+ * UTC was 8.68% out per day and Pacific 0.13%.
+ */
+let _tzFmt = null, _tzName = null, _tzCache = null;
+function dayInZone(iso, tz) {
+  const zone = tz || MARKET_TZ;
+  if (_tzName !== zone) {
+    _tzName = zone; _tzCache = {};
+    try {
+      _tzFmt = new Intl.DateTimeFormat('en-CA', { timeZone: zone,
+        year: 'numeric', month: '2-digit', day: '2-digit' });
+    } catch (e) { _tzFmt = null; }
+  }
+  /* The marketplace day only ever changes on the hour, so 120,000 order rows
+     need at most one conversion per hour covered — not one per row. */
+  const key = String(iso).slice(0, 13);
+  const hit = _tzCache[key];
+  if (hit !== undefined) return hit;
+  const d = new Date(iso);
+  if (isNaN(d)) return (_tzCache[key] = null);
+  return (_tzCache[key] = _tzFmt ? _tzFmt.format(d) : dayKey(d));
+}
+
+/** Amazon writes M/D/YY; Intentwise writes MM-DD-YY. Both mean a calendar day. */
+function parseDate(s) {
+  if (s instanceof Date) return new Date(s.getFullYear(), s.getMonth(), s.getDate());
+  const t = String(s || '').trim();
+  let m;
+  if ((m = t.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/))) {
+    let y = +m[3]; if (y < 100) y += 2000;
+    return new Date(y, +m[1] - 1, +m[2]);
+  }
+  if ((m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+
+/* ---------- CSV, and the tab-separated files Amazon calls .txt ---------- */
+function parseCsv(text, delim) {
+  const D = delim || ',';
+  text = text.replace(/^﻿/, '');
+
+  /* A file with no quote character anywhere is nothing but split points, and
+     the browser's own split is far quicker than walking every character. The
+     All Orders export is 23 MB of tab-separated rows; the character loop below
+     took 42 seconds on it, this takes under two. */
+  if (text.indexOf('"') < 0) {
+    const out = [];
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      if (line.charCodeAt(line.length - 1) === 13) line = line.slice(0, -1);
+      if (line) out.push(line.split(D));
+    }
+    return out;
+  }
+
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === D) { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(v => String(v).trim() !== ''));
+}
+function toObjects(rows) {
+  const head = rows[0].map(h => String(h).trim());
+  return rows.slice(1).map(r => {
+    const o = {}; head.forEach((h, i) => o[h] = r[i]); return o;
+  });
+}
+
+/* ---------- XLSX, without a library ----------
+ * An .xlsx is a zip of XML. The browser can inflate with DecompressionStream,
+ * so the Intentwise export is read directly and the manual transpose step in
+ * the old process disappears entirely. */
+async function unzip(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= 0 && i > buf.length - 66000; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('That file is not a readable .xlsx.');
+
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const out = {};
+
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const csize  = dv.getUint32(p + 20, true);
+    const nlen   = dv.getUint16(p + 28, true);
+    const elen   = dv.getUint16(p + 30, true);
+    const clen   = dv.getUint16(p + 32, true);
+    const lho    = dv.getUint32(p + 42, true);
+    const name   = new TextDecoder().decode(buf.subarray(p + 46, p + 46 + nlen));
+
+    const lnlen = dv.getUint16(lho + 26, true);
+    const lelen = dv.getUint16(lho + 28, true);
+    const start = lho + 30 + lnlen + lelen;
+    const raw = buf.subarray(start, start + csize);
+
+    if (method === 0) out[name] = raw;
+    else if (method === 8) {
+      const ds = new DecompressionStream('deflate-raw');
+      const ab = await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+      out[name] = new Uint8Array(ab);
+    }
+    p += 46 + nlen + elen + clen;
+  }
+  return out;
+}
+
+async function readXlsx(file) {
+  const files = await unzip(new Uint8Array(await file.arrayBuffer()));
+  const dec = new TextDecoder();
+  const xml = n => files[n] ? new DOMParser().parseFromString(dec.decode(files[n]), 'application/xml') : null;
+
+  const shared = [];
+  const sst = xml('xl/sharedStrings.xml');
+  if (sst) sst.querySelectorAll('si').forEach(si => {
+    shared.push(Array.from(si.querySelectorAll('t')).map(t => t.textContent).join(''));
+  });
+
+  const sheetName = Object.keys(files).find(n => /^xl\/worksheets\/sheet1\.xml$/.test(n))
+                 || Object.keys(files).find(n => /^xl\/worksheets\/.*\.xml$/.test(n));
+  const sheet = xml(sheetName);
+  if (!sheet) throw new Error('No worksheet found in that file.');
+
+  const grid = [];
+  sheet.querySelectorAll('row').forEach(function (r) {
+    const cells = [];
+    r.querySelectorAll('c').forEach(function (c) {
+      const ref = c.getAttribute('r') || '';
+      const col = ref.replace(/\d+/g, '');
+      let idx = 0;
+      for (let i = 0; i < col.length; i++) idx = idx * 26 + (col.charCodeAt(i) - 64);
+      idx = Math.max(0, idx - 1);
+      const t = c.getAttribute('t');
+      const v = c.querySelector('v');
+      const isv = c.querySelector('is t');
+      let val = isv ? isv.textContent : (v ? v.textContent : '');
+      if (t === 's') val = shared[+val] ?? '';
+      cells[idx] = val;
+    });
+    grid.push(cells);
+  });
+  return grid;
+}
+
+/* ---------- what kind of file is this? ---------- */
+function detect(head) {
+  const h = head.map(x => String(x).trim().toLowerCase());
+  const has = s => h.indexOf(s) >= 0;
+  if (has('(parent) asin') || has('(child) asin')) return 'asin';
+  if (has('date') && has('ordered product sales') && has('sessions - total')) return 'daily';
+  if (h[0] === 'metrics') return 'ads';
+  if (has('amazon-order-id') && has('promotion-ids')) return 'orders';
+  if (has('asin') && (has('total cogs') || has('landed manufacturer'))) return 'cogs';
+  if (has('asin') && has('expected-fulfillment-fee-per-unit')) return 'fees';
+  if (has('year') && has('month') && (has('plan sales') || has('planned sales'))) return 'plan';
+  return null;
+}
+
+const FILE_LABEL = {
+  daily: 'Sales and Traffic — daily',
+  asin:  'Detail Page Sales and Traffic — by ASIN',
+  ads:   'Intentwise campaigns — daily',
+  cogs:  'Landed cost per SKU',
+  fees:  'Fee Preview',
+  plan:  'Sales and budget plan',
+  page:  'An earlier copy of this page',
+  orders:'All Orders — one row per item',
+  logo:  'Masthead logo',
+};
+
+/**
+ * A logo is stored inside the page, so it has to be small. A raster image is
+ * redrawn at 120px tall before it is kept; an SVG is left alone, since it is
+ * already resolution-independent and usually tiny.
+ */
+async function readLogo(file) {
+  const url = await new Promise(function (res, rej) {
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = () => rej(new Error('That image could not be read.'));
+    fr.readAsDataURL(file);
+  });
+  if (/^data:image\/svg/.test(url)) {
+    if (url.length > 400000) throw new Error('That SVG is very large — please send a simpler one.');
+    return url;
+  }
+  const img = await new Promise(function (res, rej) {
+    const i = new Image();
+    i.onload = () => res(i);
+    i.onerror = () => rej(new Error('That image could not be decoded.'));
+    i.src = url;
+  });
+  const nh = img.naturalHeight || img.height, nw = img.naturalWidth || img.width;
+  if (!nh || !nw) throw new Error('That image has no size.');
+  const h = Math.min(120, nh), w = Math.max(1, Math.round(nw * (h / nh)));
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  cv.getContext('2d').drawImage(img, 0, 0, w, h);
+  return cv.toDataURL('image/png');
+}
+
+/* ---------- readers ---------- */
+
+function readDaily(objs) {
+  const out = [];
+  objs.forEach(function (o) {
+    const d = parseDate(o['Date']);
+    if (!d) return;
+    out.push({
+      date: dayKey(d),
+      sales:     toNum(o['Ordered Product Sales']),
+      units:     toNum(o['Units Ordered']),
+      orderItems:toNum(o['Total Order Items']),
+      sessions:  toNum(o['Sessions - Total']),
+      pvMobile:  toNum(o['Page Views - Mobile App']),
+      pvBrowser: toNum(o['Page Views - Browser']),
+      buyBox:    toPct(o['Featured Offer (Buy Box) Percentage']),
+      refundRate:toPct(o['Refund Rate']),
+      unitsRefunded: toNum(o['Units Refunded']),
+      offers:    toNum(o['Average Offer Count']),
+    });
+  });
+  return out;
+}
+
+/**
+ * Amazon returns ONE ROW PER SKU but measures traffic PER ASIN, so sessions and
+ * page views repeat identically down the SKU rows of one ASIN. Summing them
+ * multiplies traffic — 2.13x on the August export. Units and sales are summed;
+ * traffic is taken once per (parent, child) pair.
+ */
+function readAsin(objs) {
+  const by = {};
+  objs.forEach(function (o) {
+    const parent = String(o['(Parent) ASIN'] || '').trim();
+    const asin   = String(o['(Child) ASIN'] || '').trim();
+    if (!asin) return;
+    const k = parent + '|' + asin;
+    let a = by[k];
+    if (!a) {
+      a = by[k] = {
+        parent: parent, asin: asin,
+        title: String(o['Title'] || '').trim(),
+        sessions:  toNum(o['Sessions - Total']),        // once
+        pageViews: toNum(o['Page Views - Total']),      // once
+        buyBox:    toPct(o['Featured Offer (Buy Box) Percentage']),
+        units: 0, sales: 0, orderItems: 0, skus: [],
+      };
+    }
+    a.units      += toNum(o['Units Ordered']);          // additive
+    a.sales      += toNum(o['Ordered Product Sales']);  // additive
+    a.orderItems += toNum(o['Total Order Items']);
+    const sku = String(o['SKU'] || '').trim();
+    if (sku && a.skus.indexOf(sku) < 0) a.skus.push(sku);
+  });
+  return Object.keys(by).map(k => by[k]);
+}
+
+/** Intentwise ships metrics down the rows and dates across the columns. */
+function readAds(grid) {
+  const head = grid[0] || [];
+  const dates = [];
+  for (let c = 1; c < head.length; c++) {
+    const d = parseDate(head[c]);
+    dates[c] = d ? dayKey(d) : null;
+  }
+  const byDay = {};
+  dates.forEach(function (k) { if (k) byDay[k] = { date: k }; });
+
+  const WANT = { 'spend': 'spend', 'ad revenue': 'adSales', 'orders': 'adOrders',
+                 'impressions': 'impressions', 'clicks': 'clicks',
+                 'ntb orders': 'ntbOrders', 'ntb sales': 'ntbSales',
+                 'units sold': 'adUnits' };
+
+  for (let r = 1; r < grid.length; r++) {
+    const name = String((grid[r] || [])[0] || '').trim().toLowerCase();
+    const field = WANT[name];
+    if (!field) continue;
+    for (let c = 1; c < grid[r].length; c++) {
+      if (dates[c]) byDay[dates[c]][field] = toNum(grid[r][c]);
+    }
+  }
+  return Object.keys(byDay).map(k => byDay[k]).filter(d => d.spend !== undefined);
+}
+
+/**
+ * Order-level rows, rolled up to one record per day plus a per-ASIN split.
+ *
+ * Subscribe & Save is not a column anywhere in Amazon's exports — but every
+ * subscription order carries the SnS discount in promotion-ids, so it can be
+ * counted from here. Cancelled items are dropped: on the real file that choice
+ * reconciled to within 1.1% of the Business Report's own order-item counts,
+ * while counting only shipped items was 16% short.
+ */
+function readOrders(rows, tz) {
+  const head = rows[0].map(h => String(h).trim());
+  const ix = {};
+  head.forEach((h, i) => ix[h] = i);
+  const cDate = ix['purchase-date'], cStat = ix['item-status'],
+        cQty = ix['quantity'], cPromo = ix['promotion-ids'], cAsin = ix['asin'];
+  if (cDate == null || cAsin == null) {
+    throw new Error('That All Orders file has no purchase-date or asin column.');
+  }
+
+  const by = {};
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (r[cStat] === 'Cancelled') continue;
+    const k = dayInZone(r[cDate], tz);
+    if (!k) continue;
+    let rec = by[k];
+    if (!rec) rec = by[k] = { date: k, items: 0, units: 0, snsItems: 0, snsUnits: 0, a: {} };
+    const q = +r[cQty] || 1;
+    const promo = r[cPromo];
+    const sns = promo ? promo.toLowerCase().indexOf('subscribe') >= 0 : false;
+    rec.items += 1; rec.units += q;
+    if (sns) { rec.snsItems += 1; rec.snsUnits += q; }
+
+    const asin = r[cAsin];
+    if (asin) {
+      let x = rec.a[asin];
+      if (!x) x = rec.a[asin] = [0, 0, 0, 0];
+      x[0] += 1; x[1] += q;
+      if (sns) { x[2] += 1; x[3] += q; }
+    }
+  }
+  return Object.keys(by).map(k => by[k]);
+}
+
+function readCogs(objs) {
+  return objs.map(function (o) {
+    const total = o['TOTAL COGS'] != null && o['TOTAL COGS'] !== ''
+      ? toNum(o['TOTAL COGS'])
+      : toNum(o['Landed Manufacturer']) + toNum(o['Pick / Pack / Labeling']) +
+        toNum(o['Bundling Material']) + toNum(o['Corrugate']);
+    const ship = o['FBM Shipping'];
+    return { asin: String(o['ASIN'] || '').trim(), name: String(o['Product'] || '').trim(),
+             sku: String(o['Core SKU'] || '').trim(),
+             group: String(o['Group'] || 'Ungrouped').trim(), cogs: total,
+             fbmShipping: (ship === '' || ship == null) ? null : toNum(ship) };
+  }).filter(r => r.asin && r.asin !== 'B0EXAMPLE01');
+}
+
+function readFees(objs) {
+  const by = {};
+  objs.forEach(function (o) {
+    const asin = String(o['asin'] || '').trim();
+    const fba = parseFloat(o['expected-fulfillment-fee-per-unit']);
+    if (!asin || !isFinite(fba)) return;
+    const price = toNum(o['your-price']);
+    const ref = toNum(o['estimated-referral-fee-per-unit']);
+    if (!by[asin] || fba > by[asin].fba) {
+      by[asin] = { asin: asin, fba: fba, listPrice: price,
+                   refRate: price ? ref / price : null,
+                   fulfilment: String(o['fulfilled-by'] || '').trim() };
+    }
+  });
+  return Object.keys(by).map(k => by[k]);
+}
+
+function readPlan(objs) {
+  return objs.map(o => ({
+    year: toNum(o['Year']), month: String(o['Month'] || '').trim(),
+    planSales: toNum(o['Plan sales'] ?? o['Planned sales'] ?? o['Plan Sales']),
+    planSpend: toNum(o['Plan spend'] ?? o['Planned spend'] ?? o['Plan Spend']),
+  })).filter(r => r.year && MONTHS.indexOf(r.month) >= 0);
+}
+
+/* ---------- read one dropped file ---------- */
+async function readFile(file) {
+  const name = file.name.toLowerCase();
+  /* An earlier copy of this page carries its whole dataset inside it. Dropping
+     one in moves the history across — that is how a new version of the page
+     inherits everything you have already loaded, and how a bad publish is
+     undone from a Netlify deploy you downloaded. */
+  if (name.endsWith('.html') || name.endsWith('.htm')) {
+    const text = await file.text();
+    const m = text.match(/<script[^>]*id="dataset"[^>]*>([\s\S]*?)<\/script>/);
+    if (!m) throw new Error('That page carries no dataset — is it a copy of this dashboard?');
+    let inc;
+    try { inc = JSON.parse(m[1]); }
+    catch (e) { throw new Error('The dataset inside that page could not be read.'); }
+    if (!inc || typeof inc !== 'object' || !inc.daily) {
+      throw new Error('That page carries no usable data.');
+    }
+    return { kind: 'page', ds: inc };
+  }
+  if (/\.(png|jpe?g|svg|webp|gif)$/.test(name)) {
+    return { kind: 'logo', dataUri: await readLogo(file) };
+  }
+  if (name.endsWith('.xlsx') || name.endsWith('.xlsm')) {
+    const grid = await readXlsx(file);
+    const kind = detect(grid[0] || []);
+    if (kind !== 'ads') throw new Error('Only the Intentwise export is expected as .xlsx.');
+    return { kind: 'ads', rows: readAds(grid), count: readAds(grid).length };
+  }
+  const text = await file.text();
+  /* Amazon ships the All Orders report as a tab-separated .txt */
+  const firstLine = text.slice(0, text.indexOf('\n') + 1 || 400);
+  const rows = parseCsv(text, firstLine.indexOf('\t') >= 0 ? '\t' : ',');
+  if (!rows.length) throw new Error('That file is empty.');
+  const kind = detect(rows[0]);
+  if (!kind) {
+    /* Naming the columns it actually saw turns "I do not recognise this" into
+       something you can act on, or forward to whoever maintains this page. */
+    const seen = rows[0].map(h => String(h).trim()).filter(Boolean);
+    throw new Error('Could not tell what this file is. Its columns are: ' +
+      seen.slice(0, 12).join(' | ') + (seen.length > 12 ? ' | …(' +
+      (seen.length - 12) + ' more)' : ''));
+  }
+  /* every other reader wants objects; the order file is large enough that
+     building 120,000 of them with 37 keys each is itself a visible cost */
+  if (kind === 'orders') return { kind: kind, rows: rows, count: rows.length - 1 };
+  const objs = toObjects(rows);
+  return { kind: kind, objs: objs, count: objs.length };
+}
+
+
+/* ===== 11_merge.js ===== */
+/* ============================================================================
+ *  MERGE — folds a freshly read file into the dataset the page carries.
+ *
+ *  Every merge is idempotent: dropping the same file twice changes nothing, and
+ *  dropping a corrected file replaces what was there. The dataset is the record,
+ *  and it travels inside the page.
+ * ========================================================================= */
+
+function emptyDataset() {
+  return { brand: 'Brand', daily: {}, asin: {}, orders: {}, cogs: {}, fees: {},
+           plan: {}, log: [], updated: null };
+}
+
+/** Daily rows are keyed by date — the newest file wins for any day it covers. */
+function mergeDaily(ds, rows) {
+  let added = 0, replaced = 0;
+  rows.forEach(function (r) {
+    if (ds.daily[r.date]) replaced++; else added++;
+    ds.daily[r.date] = Object.assign(ds.daily[r.date] || {}, r);
+  });
+  return { added: added, replaced: replaced };
+}
+
+/** Advertising merges onto the same day records, leaving traffic untouched. */
+function mergeAds(ds, rows) {
+  let matched = 0, orphan = 0;
+  rows.forEach(function (r) {
+    if (!ds.daily[r.date]) { ds.daily[r.date] = { date: r.date, sales: 0, units: 0, sessions: 0 }; orphan++; }
+    else matched++;
+    const d = ds.daily[r.date];
+    d.spend = r.spend; d.adSales = r.adSales; d.adOrders = r.adOrders;
+    d.impressions = r.impressions; d.clicks = r.clicks;
+    d.ntbOrders = r.ntbOrders; d.ntbSales = r.ntbSales;
+    d.adUnits = r.adUnits;
+    d.hasAds = true;
+  });
+  return { matched: matched, orphan: orphan };
+}
+
+/** Order-level days replace whatever was there for the days they cover. */
+function mergeOrders(ds, rows) {
+  ds.orders = ds.orders || {};
+  let added = 0, replaced = 0;
+  rows.forEach(function (r) {
+    if (ds.orders[r.date]) replaced++; else added++;
+    ds.orders[r.date] = r;
+  });
+  return { added: added, replaced: replaced };
+}
+
+/** Per-ASIN order and Subscribe & Save counts across a date range. */
+function snsForRange(ds, from, to) {
+  const out = {};
+  Object.keys(ds.orders || {}).forEach(function (k) {
+    if (k < from || k > to) return;
+    const a = ds.orders[k].a || {};
+    Object.keys(a).forEach(function (asin) {
+      const x = out[asin] || (out[asin] = [0, 0, 0, 0]);
+      for (let i = 0; i < 4; i++) x[i] += a[asin][i] || 0;
+    });
+  });
+  return out;
+}
+
+/* ---------- by-ASIN periods are explicit date ranges ----------
+ * The export carries no dates at all, so the range comes from the person
+ * dropping it — and it is very often a part month, because the pull happens
+ * mid-month. A range is REPLACED wholesale rather than merged, because a
+ * re-pull of the same window is a correction, not an addition. */
+
+const rangeKey = (from, to) => from + '|' + to;
+
+function mergeAsin(ds, rows, from, to) {
+  const key = rangeKey(from, to);
+  const before = (ds.asin[key] || []).length;
+  ds.asin[key] = rows;
+  return { key: key, from: from, to: to, before: before, after: rows.length };
+}
+
+/** Datasets written before ranges existed stored "2026-Aug" — a whole month. */
+function migrateAsin(ds) {
+  Object.keys(ds.asin || {}).forEach(function (k) {
+    if (k.indexOf('|') >= 0) return;
+    const p = String(k).split('-');
+    const mi = MONTHS.indexOf(p[1]);
+    if (p.length !== 2 || mi < 0) { delete ds.asin[k]; return; }
+    const nk = rangeKey(dayKey(new Date(+p[0], mi, 1)), dayKey(new Date(+p[0], mi + 1, 0)));
+    ds.asin[nk] = ds.asin[k];
+    delete ds.asin[k];
+  });
+}
+
+/** Every stored by-ASIN window, oldest first. */
+function asinRanges(ds) {
+  return Object.keys(ds.asin || {}).map(function (k) {
+    const p = k.split('|');
+    return { key: k, from: p[0], to: p[1], days: daysBetween(p[0], p[1]) + 1 };
+  }).sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : (a.to < b.to ? -1 : 1));
+}
+
+/**
+ * The stored window that best describes a selected period.
+ * An exact match wins. Otherwise the window that sits most completely inside
+ * the selection wins — a 1-15 Aug pull is the right answer for August, and
+ * still the right answer for the week of 9 Aug, but never for July.
+ */
+function bestAsinRange(ds, from, to) {
+  const all = asinRanges(ds);
+  if (!all.length) return null;
+  const exact = all.find(r => r.from === from && r.to === to);
+  if (exact) return exact;
+
+  let best = null, bestScore = 0, bestOverlap = 0;
+  all.forEach(function (r) {
+    const lo = r.from > from ? r.from : from;
+    const hi = r.to < to ? r.to : to;
+    if (lo > hi) return;
+    const overlap = daysBetween(lo, hi) + 1;
+    const score = overlap / Math.max(r.days, 1);
+    if (score > bestScore || (score === bestScore && overlap > bestOverlap)) {
+      bestScore = score; bestOverlap = overlap; best = r;
+    }
+  });
+  return best;
+}
+
+/** The window immediately before this one — only if it is a fair comparison. */
+function prevAsinRange(ds, r) {
+  if (!r) return null;
+  const earlier = asinRanges(ds).filter(x => x.to < r.from);
+  if (!earlier.length) return null;
+  const p = earlier[earlier.length - 1];
+  const ratio = p.days / r.days;
+  return (ratio >= 0.75 && ratio <= 1.33) ? p : null;
+}
+
+/**
+ * Folds an older copy of this page in. Fill-only: anything already loaded here
+ * wins, so importing a three-week-old deploy to recover a gap cannot quietly
+ * roll back the days you have since corrected.
+ */
+function mergeDataset(ds, inc) {
+  let days = 0, wins = 0, costs = 0, fees = 0, plans = 0;
+  migrateAsin(inc);
+  Object.keys(inc.daily || {}).forEach(function (k) {
+    if (!ds.daily[k]) { ds.daily[k] = inc.daily[k]; days++; }
+  });
+  ds.orders = ds.orders || {};
+  Object.keys(inc.orders || {}).forEach(function (k) {
+    if (!ds.orders[k]) ds.orders[k] = inc.orders[k];
+  });
+  Object.keys(inc.asin || {}).forEach(function (k) {
+    if (!ds.asin[k]) { ds.asin[k] = inc.asin[k]; wins++; }
+  });
+  Object.keys(inc.cogs || {}).forEach(function (k) {
+    if (!ds.cogs[k]) { ds.cogs[k] = inc.cogs[k]; costs++; }
+  });
+  Object.keys(inc.fees || {}).forEach(function (k) {
+    if (!ds.fees[k]) { ds.fees[k] = inc.fees[k]; fees++; }
+  });
+  Object.keys(inc.plan || {}).forEach(function (k) {
+    if (!ds.plan[k]) { ds.plan[k] = inc.plan[k]; plans++; }
+  });
+  if ((!ds.brand || ds.brand === 'Brand') && inc.brand) ds.brand = inc.brand;
+  if (ds.fbmShipping == null && inc.fbmShipping != null) ds.fbmShipping = inc.fbmShipping;
+  if (!ds.logo && inc.logo) ds.logo = inc.logo;
+  if (!ds.bandColor && inc.bandColor) ds.bandColor = inc.bandColor;
+  if (!ds.reportTitle && inc.reportTitle) ds.reportTitle = inc.reportTitle;
+  if (!ds.tz && inc.tz) ds.tz = inc.tz;
+  return { days: days, windows: wins, costs: costs, fees: fees, plans: plans };
+}
+
+function mergeCogs(ds, rows) {
+  rows.forEach(r => ds.cogs[r.asin] = r);
+  return { count: rows.length };
+}
+function mergeFees(ds, rows) {
+  rows.forEach(r => ds.fees[r.asin] = r);
+  return { count: rows.length };
+}
+function mergePlan(ds, rows) {
+  rows.forEach(r => ds.plan[r.year + '-' + r.month] = r);
+  return { count: rows.length };
+}
+
+/* ---------- derived views ---------- */
+
+/** Daily records, oldest first. */
+function dailyList(ds) {
+  return Object.keys(ds.daily).sort().map(k => ds.daily[k]);
+}
+
+/**
+ * Per-unit contribution before advertising.
+ * FBM products carry no FBA fee — their shipping cost is the brand's own, and
+ * is taken from the config rather than from Amazon's fee report.
+ */
+function productEconomics(ds, asin, price) {
+  const c = ds.cogs[asin], f = ds.fees[asin];
+  if (!c || price == null || !isFinite(price) || price <= 0) return null;
+
+  const refRate = (f && f.refRate != null) ? f.refRate
+                : (price <= (ds.refBreak || 10) ? (ds.refLow || 0.08) : (ds.refHigh || 0.15));
+  const referral = Math.max(ds.refMin || 0.30, price * refRate);
+  /* Amazon charges an FBA fee only where it ships. Where the brand ships, the
+     cost is its own — per product first, then the fallback typed in the panel. */
+  const fulfil = f ? f.fba
+               : (c.fbmShipping != null ? c.fbmShipping
+               : (ds.fbmShipping != null ? ds.fbmShipping : null));
+  if (fulfil == null) return null;
+
+  const margin = price - c.cogs - referral - fulfil;
+  return { cogs: c.cogs, referral: referral, fulfil: fulfil, fbm: !f,
+           margin: margin, marginRate: margin / price };
+}
+
+/** Rolls the SKU-deduplicated rows up to one record per ASIN for a window. */
+function asinForKey(ds, key) {
+  const rows = (ds.asin || {})[key] || [];
+  const by = {};
+  rows.forEach(function (r) {
+    let x = by[r.asin];
+    if (!x) x = by[r.asin] = { asin: r.asin, title: r.title, sessions: 0, pageViews: 0,
+                               units: 0, sales: 0, orderItems: 0, bb: [], skus: [] };
+    // a child ASIN can sit under two parents — those are distinct listing paths
+    x.sessions   += r.sessions;
+    x.pageViews  += r.pageViews;
+    x.units      += r.units;
+    x.sales      += r.sales;
+    x.orderItems += r.orderItems || 0;
+    if (r.buyBox != null) x.bb.push(r.buyBox);
+    (r.skus || []).forEach(s => { if (x.skus.indexOf(s) < 0) x.skus.push(s); });
+  });
+
+  return Object.keys(by).map(function (k) {
+    const x = by[k];
+    /* A viewer's copy has the landed costs stripped out entirely, so the names
+       and grouping arrive separately — otherwise every product would show as
+       its raw ASIN. */
+    const c = ds.cogs[x.asin] || (ds.names && ds.names[x.asin]) || null;
+    const price = x.units ? x.sales / x.units : null;
+    const econ = productEconomics(ds, x.asin, price);
+    return {
+      asin: x.asin,
+      name: c ? c.name : (x.title || x.asin).slice(0, 44),
+      group: c ? c.group : 'Unmapped',
+      sessions: x.sessions, pageViews: x.pageViews,
+      units: x.units, sales: x.sales, orderItems: x.orderItems,
+      price: price,
+      /* Conversion is orders per session. Units per session is the other
+         number Amazon reports; a two-pack order moves one and not the other. */
+      conversion: x.sessions ? x.orderItems / x.sessions : null,
+      unitsPerSession: x.sessions ? x.units / x.sessions : null,
+      buyBox: x.bb.length ? x.bb.reduce((a, b) => a + b, 0) / x.bb.length : null,
+      margin: econ ? econ.margin : null,
+      marginTotal: econ ? econ.margin * x.units : null,
+      breakEven: econ ? econ.marginRate : null,
+      fbm: econ ? econ.fbm : null,
+      skus: x.skus,
+    };
+  }).sort((a, b) => b.sales - a.sales);
+}
+
+/** Sums a date range out of the daily records. */
+function aggregate(ds, from, to) {
+  const acc = { sales: 0, units: 0, sessions: 0, spend: 0, adSales: 0, adOrders: 0,
+                adUnits: 0, ntbOrders: 0, ntbSales: 0, clicks: 0, impressions: 0,
+                pvMobile: 0, pvBrowser: 0, unitsRefunded: 0, orderItems: 0,
+                oItems: 0, oUnits: 0, snsItems: 0, snsUnits: 0, oDays: 0,
+                days: 0, adDays: 0, last: null };
+  if (!from || !to || from > to) return acc;
+  Object.keys(ds.orders || {}).forEach(function (k) {
+    if (k < from || k > to) return;
+    const o = ds.orders[k];
+    acc.oItems += o.items || 0; acc.oUnits += o.units || 0;
+    acc.snsItems += o.snsItems || 0; acc.snsUnits += o.snsUnits || 0;
+    acc.oDays += 1;
+  });
+  dailyList(ds).forEach(function (d) {
+    if (d.date < from || d.date > to) return;
+    acc.sales += d.sales || 0; acc.units += d.units || 0;
+    acc.sessions += d.sessions || 0; acc.spend += d.spend || 0;
+    acc.adSales += d.adSales || 0; acc.adOrders += d.adOrders || 0;
+    acc.adUnits += d.adUnits || 0;
+    acc.ntbOrders += d.ntbOrders || 0; acc.ntbSales += d.ntbSales || 0;
+    acc.clicks += d.clicks || 0; acc.impressions += d.impressions || 0;
+    acc.pvMobile += d.pvMobile || 0; acc.pvBrowser += d.pvBrowser || 0;
+    acc.unitsRefunded += d.unitsRefunded || 0; acc.orderItems += d.orderItems || 0;
+    acc.days += 1; acc.last = d.date;
+    if (d.hasAds) acc.adDays += 1;
+  });
+  return acc;
+}
+
+/* ---------- checks that run after every merge ---------- */
+function runChecks(ds) {
+  const out = [];
+  const days = dailyList(ds);
+  if (!days.length) { out.push({ level: 'info', text: 'No daily data yet.' }); return out; }
+
+  const last = days[days.length - 1];
+  const age = Math.floor((Date.now() - new Date(last.date + 'T12:00:00')) / 86400000);
+  if (age > 9) out.push({ level: 'warn', text: 'Newest day is ' + last.date + ', ' + age + ' days ago.' });
+
+  let gaps = 0;
+  for (let i = 1; i < days.length; i++) {
+    const step = Math.round((new Date(days[i].date) - new Date(days[i - 1].date)) / 86400000);
+    if (step > 1) gaps += step - 1;
+  }
+  if (gaps) out.push({ level: 'warn', text: gaps + ' calendar day(s) missing between ' +
+    days[0].date + ' and ' + last.date + '.' });
+
+  /* a daily advertising export sometimes carries a monthly total on the 1st */
+  const spends = days.filter(d => d.spend > 0).map(d => d.spend).sort((a, b) => a - b);
+  if (spends.length > 6) {
+    const med = spends[Math.floor(spends.length / 2)];
+    days.forEach(function (d) {
+      if (d.spend > med * 5) out.push({ level: 'bad', text: 'Ad spend on ' + d.date +
+        ' is $' + Math.round(d.spend).toLocaleString() + ' — ' + Math.round(d.spend / med) +
+        'x a normal day. That looks like a monthly total, not one day.' });
+    });
+  }
+
+  /* by-ASIN windows that overlap each other cannot both be right */
+  const rs = asinRanges(ds);
+  for (let i = 1; i < rs.length; i++) {
+    if (rs[i].from <= rs[i - 1].to) {
+      out.push({ level: 'warn', text: 'Two by-ASIN pulls overlap: ' +
+        rangeLabel(rs[i - 1].from, rs[i - 1].to) + ' and ' + rangeLabel(rs[i].from, rs[i].to) +
+        '. Product numbers for a period will come from one of them, not both.' });
+    }
+  }
+
+  /* the order-level file and the Business Report count the same thing two
+     different ways, so a wide gap means one of them is not what we think */
+  const od = Object.keys(ds.orders || {});
+  if (od.length) {
+    const lo = od.slice().sort()[0], hi = od.slice().sort()[od.length - 1];
+    let bi = 0, oi = 0, both = 0;
+    days.forEach(function (d) {
+      if (d.date < lo || d.date > hi || !ds.orders[d.date]) return;
+      bi += d.orderItems || 0; oi += ds.orders[d.date].items || 0; both++;
+    });
+    if (both > 3 && bi) {
+      const gap = Math.abs(oi - bi) / bi;
+      if (gap > 0.03) {
+        out.push({ level: 'warn', text: 'Over ' + both + ' shared days the All Orders file ' +
+          'counts ' + oi.toLocaleString() + ' order items and the Business Report ' +
+          bi.toLocaleString() + ' — ' + (gap * 100).toFixed(1) + '% apart. If that is more ' +
+          'than a couple of percent the marketplace timezone in the panel is probably wrong.' });
+      }
+    }
+    const uncovered = days.filter(d => !ds.orders[d.date]).length;
+    if (uncovered) out.push({ level: 'info', text: uncovered + ' day(s) of traffic have no ' +
+      'All Orders rows, so Subscribe & Save cannot be split out for them.' });
+  }
+
+  const noCogs = [];
+  rs.slice(-1).forEach(function (r) {
+    asinForKey(ds, r.key).forEach(function (x) {
+      if (x.margin == null && noCogs.indexOf(x.name) < 0) noCogs.push(x.name);
+    });
+  });
+  if (noCogs.length) out.push({ level: 'warn', text: noCogs.length +
+    ' product(s) show no margin — missing landed cost or fulfilment cost: ' +
+    noCogs.slice(0, 5).join(', ') + (noCogs.length > 5 ? '…' : '') + '.' });
+
+  if (!out.length) out.push({ level: 'ok', text: 'All checks passed.' });
+  return out;
+}
+
+
+/* ===== 12_render.js ===== */
+/* ============================================================================
+ *  RENDER — the dashboard itself
+ *
+ *  Everything on screen is derived from two things: the daily records, which
+ *  answer any date range you ask them, and the by-ASIN windows, which only
+ *  answer the ranges they were pulled for. Monthly and weekly views are the
+ *  same machinery pointed at a different span, and so are the two tabs.
+ * ========================================================================= */
+
+const money  = n => n == null ? '—' : '$' + Math.round(n).toLocaleString('en-US');
+const money2 = n => n == null ? '—' : '$' + n.toFixed(2);
+const pct    = (n, d = 1) => n == null ? '—' : (n * 100).toFixed(d) + '%';
+const int    = n => n == null ? '—' : Math.round(n).toLocaleString('en-US');
+const signed = n => n == null ? '—' : (n >= 0 ? '+' : '−') + Math.abs(n * 100).toFixed(1) + '%';
+
+const axisMoney = v => Math.abs(v) >= 1000 ? '$' + Math.round(v / 1000) + 'k' : '$' + (Math.round(v * 100) / 100);
+const axisInt   = v => Math.abs(v) >= 1000 ? Math.round(v / 1000) + 'k' : String(Math.round(v));
+const axisPct   = v => (v * 100).toFixed(v > 0 && v < 0.1 ? 1 : 0) + '%';
+
+let DS = null;
+let view = { tab: 'sales', mode: 'month', key: null, group: 'All',
+             sort: 'sales', dir: -1, open: null };
+
+/* ---------- period model ---------- */
+
+/** Turns a period key into its span, its neighbours and its names. */
+function periodInfo(mode, key) {
+  if (!key) return null;
+  if (mode === 'week') {
+    const parts = String(key).split('-W');
+    const y = +parts[0], w = +parts[1];
+    if (!y || !w) return null;
+    const ws = addDays(firstWeekStart(y), (w - 1) * 7);
+    const we = addDays(ws, 6);
+    const py = y - 1, pw = Math.min(w, weeksInYear(py));
+    return {
+      mode: 'week', key: key, from: dayKey(ws), to: dayKey(we),
+      label: 'W' + pad2(w) + ' ' + y,
+      short: 'W' + w,
+      span: rangeLabel(dayKey(ws), dayKey(we)),
+      prev: weekKeyOf(addDays(ws, -7)),
+      ly: py + '-W' + pad2(pw),
+      prevName: 'previous week', lyName: 'same week last year',
+    };
+  }
+  const parts = String(key).split('-');
+  const y = +parts[0], m = +parts[1];
+  if (!y || !m) return null;
+  const from = new Date(y, m - 1, 1), to = new Date(y, m, 0);
+  const pm = new Date(y, m - 2, 1);
+  return {
+    mode: 'month', key: key, from: dayKey(from), to: dayKey(to),
+    label: MONTHS[m - 1] + ' ' + y,
+    short: MONTHS[m - 1],
+    span: rangeLabel(dayKey(from), dayKey(to)),
+    prev: pm.getFullYear() + '-' + pad2(pm.getMonth() + 1),
+    ly: (y - 1) + '-' + pad2(m),
+    prevName: 'previous month', lyName: 'same month last year',
+  };
+}
+
+const lastDataDay = () => (dailyList(DS).slice(-1)[0] || {}).date || null;
+
+/** How many days inside a span actually carry a daily record. */
+function coverage(from, to) {
+  let n = 0;
+  dailyList(DS).forEach(d => { if (d.date >= from && d.date <= to) n++; });
+  return n;
+}
+
+/** Every period the data can speak about, oldest first. */
+function availablePeriods(mode) {
+  const set = {};
+  const add = k => { if (k) set[k] = 1; };
+  const days = dailyList(DS);
+  days.forEach(d =>
+    add(mode === 'week' ? weekKeyOf(fromKey(d.date)) : d.date.slice(0, 7)));
+  /* By-ASIN windows only open a period of their own when there is no daily
+     data at all. Otherwise a pull running to 31 August would offer the week of
+     30 August as a period with nothing in it but zeroes. */
+  if (!days.length) {
+    asinRanges(DS).forEach(function (r) {
+      add(mode === 'week' ? weekKeyOf(fromKey(r.from)) : r.from.slice(0, 7));
+      add(mode === 'week' ? weekKeyOf(fromKey(r.to)) : r.to.slice(0, 7));
+    });
+  }
+  return Object.keys(set).sort();
+}
+
+/**
+ * Current period against its two comparisons.
+ *
+ * An unfinished period is not compared against a finished one. If August has
+ * 24 days of data, it is measured against the first 24 days of July and the
+ * first 24 days of last August — otherwise every current month would look
+ * like a collapse until the month ended.
+ */
+function compareSet(info) {
+  const last = lastDataDay();
+  const end = (last && last < info.to) ? last : info.to;
+  if (!last || end < info.from) {
+    return { cur: aggregate(DS, info.from, info.to), from: info.from, to: info.to,
+             span: daysBetween(info.from, info.to) + 1, partial: false, prev: null, ly: null };
+  }
+  const span = daysBetween(info.from, end) + 1;
+  const full = daysBetween(info.from, info.to) + 1;
+
+  /**
+   * A comparison arm is only offered when it is actually comparable. Holding
+   * 24 days of August against the two days of July that happen to be in the
+   * file would produce a number, and the number would be a lie — so a thin arm
+   * is reported as thin rather than divided.
+   */
+  const arm = function (key) {
+    const p = periodInfo(info.mode, key);
+    if (!p) return null;
+    let stop = dayKey(addDays(fromKey(p.from), span - 1));
+    if (stop > p.to) stop = p.to;
+    const agg = aggregate(DS, p.from, stop);
+    const want = daysBetween(p.from, stop) + 1;
+    if (!agg.days) return null;
+    return { info: p, agg: agg, from: p.from, to: stop,
+             thin: agg.days < want * 0.8, have: agg.days, want: want };
+  };
+
+  return { cur: aggregate(DS, info.from, end), from: info.from, to: end,
+           span: span, full: full, partial: span < full,
+           prev: arm(info.prev), ly: arm(info.ly) };
+}
+
+/* ---------- metric dictionary — one definition, used everywhere ----------
+ * tab: which tab it belongs to. chart:false keeps it in the comparison table
+ * but off the wall of charts. */
+const METRICS = [
+  { id: 'sales', tab: 'sales', t: 'Revenue', cap: 'Ordered product sales.',
+    get: a => a.sales, fmt: money, axis: axisMoney, good: 1, kind: 'bars' },
+  { id: 'units', tab: 'sales', t: 'Units', cap: 'Units ordered.',
+    get: a => a.units, fmt: int, axis: axisInt, good: 1, kind: 'bars' },
+  { id: 'sessions', tab: 'sales', t: 'Sessions', cap: 'Visits to the detail pages.',
+    get: a => a.sessions, fmt: int, axis: axisInt, good: 1, kind: 'bars' },
+  { id: 'conv', tab: 'sales', t: 'Conversion',
+    cap: "Orders per session — Amazon's order-item session percentage. Subscribe & Save orders arrive without a session, so this runs a little high.",
+    get: a => a.sessions ? a.orderItems / a.sessions : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
+  { id: 'price', tab: 'sales', t: 'Average price', chart: false,
+    cap: 'Revenue divided by units — moves with discounts and with the product mix.',
+    get: a => a.units ? a.sales / a.units : null,
+    fmt: money2, axis: axisMoney, good: 0, kind: 'line' },
+  { id: 'convEx', tab: 'sales', t: 'Conversion excl. Subscribe & Save',
+    cap: "Orders that could have come from a session, over sessions. Every Subscribe & Save order carries the SnS discount in the All Orders file, so they can be taken out — recurring deliveries never involved a visit. This is the number to compare against anyone else's conversion rate.",
+    get: a => (a.oDays && a.sessions) ? (a.oItems - a.snsItems) / a.sessions : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
+  { id: 'snsShare', tab: 'sales', t: 'Subscribe & Save share of orders',
+    cap: 'Order items carrying the Subscribe & Save discount, as a share of all order items. Counts a subscriber\'s first order as well as the repeats, because Amazon does not distinguish them anywhere in the file.',
+    get: a => a.oItems ? a.snsItems / a.oItems : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
+  { id: 'tacos', tab: 'both', t: 'TACOS',
+    cap: 'Ad spend as a share of all revenue, advertised or not.',
+    get: a => a.sales ? a.spend / a.sales : null,
+    fmt: v => pct(v, 2), axis: axisPct, good: -1, kind: 'line' },
+  { id: 'refund', tab: 'sales', t: 'Refund rate', cap: 'Units refunded against units ordered.',
+    get: a => a.units ? a.unitsRefunded / a.units : null,
+    fmt: v => pct(v, 2), axis: axisPct, good: -1, kind: 'line' },
+
+  { id: 'spend', tab: 'ads', t: 'Ad spend', cap: 'Total advertising cost.',
+    get: a => a.spend, fmt: money, axis: axisMoney, good: 0, kind: 'bars' },
+  { id: 'adSales', tab: 'ads', t: 'Ad revenue', cap: 'Revenue the ads are credited with.',
+    get: a => a.adSales, fmt: money, axis: axisMoney, good: 1, kind: 'bars' },
+  { id: 'acos', tab: 'ads', t: 'ACOS',
+    cap: 'Ad spend as a share of the revenue the ads themselves are credited with.',
+    get: a => a.adSales ? a.spend / a.adSales : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: -1, kind: 'line' },
+  { id: 'adshare', tab: 'ads', t: 'Ad-attributed share of revenue',
+    cap: 'How much of the total is credited to advertising. Rising can mean the organic side is weakening.',
+    get: a => a.sales ? a.adSales / a.sales : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 0, kind: 'line' },
+  { id: 'ntb', tab: 'ads', t: 'New-to-brand share of ad orders',
+    cap: 'Advertised orders from buyers who had not bought the brand in a year.',
+    get: a => a.adOrders ? a.ntbOrders / a.adOrders : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
+  { id: 'clicks', tab: 'ads', t: 'Clicks', cap: 'Clicks the campaigns bought.',
+    get: a => a.clicks, fmt: int, axis: axisInt, good: 0, kind: 'bars' },
+  { id: 'cpc', tab: 'ads', t: 'Cost per click', cap: 'What a click costs on average.',
+    get: a => a.clicks ? a.spend / a.clicks : null,
+    fmt: money2, axis: axisMoney, good: -1, kind: 'line' },
+  { id: 'ctr', tab: 'ads', t: 'Click-through rate', cap: 'Clicks against impressions.',
+    get: a => a.impressions ? a.clicks / a.impressions : null,
+    fmt: v => pct(v, 2), axis: axisPct, good: 1, kind: 'line' },
+  { id: 'adcvr', tab: 'ads', t: 'Ad conversion rate', cap: 'Advertised orders per click.',
+    get: a => a.clicks ? a.adOrders / a.clicks : null,
+    fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
+];
+
+const metricsFor = tab => METRICS.filter(m => m.tab === tab || m.tab === 'both');
+const METRIC_BY_ID = {};
+METRICS.forEach(m => METRIC_BY_ID[m.id] = m);
+
+/* Which tiles sit on top of each tab. A '#' entry is worked out from the
+   product rows rather than from the daily records. */
+const KPI_TABS = {
+  sales: ['sales', 'units', 'sessions', 'conv', 'tacos', '#margin'],
+  ads:   ['spend', 'adSales', 'acos', 'tacos', 'adshare', '#headroom'],
+};
+
+/* ---------- arrows ---------- */
+function deltaOf(cur, prev) {
+  if (cur == null || prev == null || !isFinite(prev) || !isFinite(cur) || prev === 0) return null;
+  return (cur - prev) / prev;
+}
+/**
+ * good:  1  up is good      -1  up is bad      0  neither
+ * A metric with no direction gets a grey arrow: it moved, and whether that is
+ * welcome depends on why.
+ */
+function arrow(d, good) {
+  if (d == null) return '<span class="flat">—</span>';
+  if (Math.abs(d) < 0.0005) return '<span class="flat">▬ 0.0%</span>';
+  const up = d > 0;
+  const cls = !good ? 'flat' : (good > 0) === up ? 'up' : 'down';
+  return '<span class="' + cls + '">' + (up ? '▲' : '▼') + ' ' + signed(d) + '</span>';
+}
+
+/* ---------- svg plumbing ---------- */
+const SVGNS = 'http://www.w3.org/2000/svg';
+function svgEl(tag, attrs, parent) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+function showTip(e, html, wide) {
+  const t = document.getElementById('tip');
+  t.classList.toggle('wide', !!wide);
+  t.innerHTML = html; t.style.opacity = 1;
+  const r = t.getBoundingClientRect();
+  t.style.left = Math.min(window.innerWidth - r.width - 8, Math.max(8, e.clientX + 12)) + 'px';
+  t.style.top = Math.max(8, e.clientY - r.height - 10) + 'px';
+}
+/** Same panel, anchored to an element — for keyboard focus and for taps. */
+function showTipFor(el, html) {
+  const t = document.getElementById('tip');
+  t.classList.add('wide');
+  t.innerHTML = html; t.style.opacity = 1;
+  const b = el.getBoundingClientRect(), r = t.getBoundingClientRect();
+  t.style.left = Math.min(window.innerWidth - r.width - 8,
+                          Math.max(8, b.left + b.width / 2 - r.width / 2)) + 'px';
+  const above = b.top - r.height - 10;
+  t.style.top = (above > 8 ? above : b.bottom + 10) + 'px';
+}
+const hideTip = () => document.getElementById('tip').style.opacity = 0;
+
+/* ---------- notes behind a mark ----------
+ * Explanations and warnings used to sit as paragraphs under every heading.
+ * They now live behind a mark next to the heading: ? for what a number means,
+ * ! for something that needs attention. The ! keeps its colour so a warning is
+ * still visible at a glance without the wall of prose. */
+let _noteSeq = 0;
+const NOTES = {};
+function badge(level, html) {
+  if (!html) return '';
+  const id = 'n' + (++_noteSeq);
+  NOTES[id] = html;
+  const warn = level === '!';
+  return '<button class="ibadge' + (warn ? ' warn' : '') + '" type="button" data-note="' + id +
+    '" aria-label="' + (warn ? 'Warning' : 'What this means') + '">' +
+    (warn ? '!' : '?') + '</button>';
+}
+function wireBadges() {
+  document.querySelectorAll('.ibadge[data-note]').forEach(function (b) {
+    const html = NOTES[b.dataset.note];
+    if (!html) return;
+    b.addEventListener('mousemove', e => showTip(e, html, true));
+    b.addEventListener('mouseleave', hideTip);
+    b.addEventListener('focus', () => showTipFor(b, html));
+    b.addEventListener('blur', hideTip);
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      showTipFor(b, html);
+    });
+  });
+}
+document.addEventListener('click', function (e) {
+  if (!e.target.closest || !e.target.closest('.ibadge')) hideTip();
+});
+function niceMax(v) {
+  if (!v || !isFinite(v)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(Math.abs(v))));
+  return Math.ceil(v / (p / 2)) * (p / 2);
+}
+
+/* ---------- one chart renderer for every metric ---------- */
+function trendChart(id, pts, opt) {
+  const svg = document.getElementById(id);
+  if (!svg) return;
+  svg.innerHTML = '';
+  const W = opt.wide ? 1100 : 560, H = opt.wide ? 260 : 250;
+  const L = 58, R = 10, T = 12, B = 34;
+  const iw = W - L - R, ih = H - T - B;
+
+  const vals = [];
+  pts.forEach(p => { if (p.v != null) vals.push(p.v); if (p.lv != null) vals.push(p.lv); });
+  if (!vals.length) {
+    svgEl('text', { x: 16, y: 40, class: 'tick' }, svg).textContent = 'No data for this metric yet.';
+    return;
+  }
+  const hi = Math.max.apply(null, vals), lo = Math.min.apply(null, vals);
+
+  /* Bars always start at zero. A line whose values sit in a narrow band gets a
+     lifted floor — a flat line across the top of a zero axis says nothing. The
+     axis labels always show the real numbers, so nothing is hidden. */
+  let base = 0;
+  if (opt.kind === 'line' && lo > 0 && lo > hi * 0.35) base = lo - (hi - lo) * 0.5 - hi * 0.02;
+  if (base < 0) base = 0;
+  let top = niceMax(hi);
+  if (top <= base) top = base + Math.max(Math.abs(base) * 0.05, 1e-6);
+
+  const y = v => T + ih - ((Math.min(Math.max(v, base), top) - base) / (top - base)) * ih;
+  const step = iw / pts.length, cx = i => L + step * (i + 0.5);
+
+  for (let i = 0; i <= 4; i++) {
+    const v = base + (top - base) * i / 4;
+    svgEl('line', { class: 'gl', x1: L, x2: W - R, y1: y(v), y2: y(v) }, svg);
+    svgEl('text', { class: 'tick', x: L - 8, y: y(v) + 3.5, 'text-anchor': 'end' }, svg)
+      .textContent = opt.axis(v);
+  }
+  svgEl('line', { class: 'bl', x1: L, x2: W - R, y1: y(base), y2: y(base) }, svg);
+
+  if (opt.kind === 'bars') {
+    const paired = pts.some(p => p.lv != null && p.lv > 0);
+    /* A handful of bars should look like bars, not like pins. */
+    const cap = pts.length <= 3 ? 56 : pts.length <= 6 ? 34 : 18;
+    const bw = Math.max(2, Math.min(cap, step / (paired ? 2.8 : 1.9)));
+    pts.forEach(function (p, i) {
+      const x0 = paired ? cx(i) - bw - 1 : cx(i) - bw / 2;
+      if (p.v != null && p.v > 0) {
+        /* The period you are looking at is ringed, not recoloured — green and
+           red are already spoken for by the up and down arrows. */
+        svgEl('rect', { x: x0, y: y(p.v), width: bw, height: Math.max(1, y(base) - y(p.v)),
+                        rx: 2, fill: 'var(--s1)', 'fill-opacity': p.partial ? 0.45 : 1,
+                        stroke: p.sel ? 'var(--ink)' : 'none', 'stroke-width': 1.5 }, svg);
+      }
+      if (paired && p.lv != null && p.lv > 0) {
+        svgEl('rect', { x: cx(i) + 1, y: y(p.lv), width: bw, height: Math.max(1, y(base) - y(p.lv)),
+                        rx: 2, fill: 'var(--s2)' }, svg);
+      }
+      if (p.partial && p.v > 0 && pts.length <= 14) {
+        svgEl('text', { class: 'tick', x: paired ? x0 + bw / 2 : cx(i), y: y(p.v) - 6,
+          'text-anchor': 'middle', 'font-weight': 700 }, svg).textContent = 'part';
+      }
+    });
+  } else {
+    [['lv', 'var(--s2)'], ['v', 'var(--s1)']].forEach(function (s) {
+      const seq = [];
+      pts.forEach((p, i) => { if (p[s[0]] != null) seq.push([cx(i), p[s[0]], p.sel]); });
+      if (!seq.length) return;
+      if (seq.length > 1) {
+        svgEl('path', { d: 'M' + seq.map(a => a[0] + ',' + y(a[1])).join('L'), fill: 'none',
+          stroke: s[1], 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+          'stroke-opacity': s[0] === 'v' ? 1 : 0.75 }, svg);
+      }
+      if (pts.length <= 20 || s[0] === 'v') {
+        seq.forEach(a => svgEl('circle', { cx: a[0], cy: y(a[1]),
+          r: a[2] ? 4.5 : (pts.length > 20 ? 1.8 : 3), fill: s[1],
+          stroke: a[2] && s[0] === 'v' ? 'var(--ink)' : 'none', 'stroke-width': 1.5 }, svg));
+      }
+    });
+  }
+
+  const every = Math.ceil(pts.length / (opt.wide ? 20 : 13));
+  pts.forEach(function (p, i) {
+    const hit = svgEl('rect', { class: 'hit', x: cx(i) - step / 2, y: T, width: step, height: ih }, svg);
+    hit.addEventListener('mousemove', e => showTip(e, p.tip));
+    hit.addEventListener('mouseleave', hideTip);
+    if (i % every === 0 || i === pts.length - 1 || p.sel) {
+      svgEl('text', { class: 'tick', x: cx(i), y: H - B + 15, 'text-anchor': 'middle',
+        'font-weight': p.sel ? 700 : 400 }, svg).textContent = p.label;
+    }
+  });
+}
+
+/* ---------- the buckets a chart runs over ---------- */
+function bucketList(info) {
+  const keys = [];
+  if (info.mode === 'month') {
+    const p = info.key.split('-');
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(+p[0], +p[1] - 1 - i, 1);
+      keys.push(d.getFullYear() + '-' + pad2(d.getMonth() + 1));
+    }
+  } else {
+    const y = info.key.split('-W')[0];
+    const mine = availablePeriods('week').filter(k => k.split('-W')[0] === y);
+    if (mine.indexOf(info.key) < 0) mine.push(info.key);
+    mine.sort();
+    keys.push.apply(keys, mine);
+  }
+
+  return keys.map(function (k) {
+    const p = periodInfo(info.mode, k);
+    const lp = periodInfo(info.mode, p.ly);
+    const cov = coverage(p.from, p.to);
+    const full = daysBetween(p.from, p.to) + 1;
+    return { key: k, p: p, agg: aggregate(DS, p.from, p.to),
+             ly: lp ? aggregate(DS, lp.from, lp.to) : null,
+             days: cov, full: full, partial: cov > 0 && cov < full,
+             empty: cov === 0, sel: k === info.key };
+  }).filter(b => !b.empty || b.sel);
+}
+
+/** Which charts the reader has switched off. Kept in the dataset, so the
+    choice travels with the published page. */
+const chartOn = m => !(DS.chartOff || {})[m.id];
+
+function renderChartPicker(live) {
+  const box = document.getElementById('chartPick');
+  box.innerHTML = live.map(m =>
+    '<label class="ck"><input type="checkbox" data-c="' + m.id + '"' +
+    (chartOn(m) ? ' checked' : '') + '>' + m.t + '</label>').join('') +
+    '<span class="ckall"><button class="btn tiny" type="button" data-a="all">All</button>' +
+    '<button class="btn tiny" type="button" data-a="none">None</button></span>';
+
+  const apply = function () {
+    renderCharts(_info);
+    wireBadges();
+    const btn = document.getElementById('exportBtn');
+    if (btn) btn.disabled = false;
+  };
+  box.querySelectorAll('input[data-c]').forEach(function (c) {
+    c.onchange = function () {
+      DS.chartOff = DS.chartOff || {};
+      if (c.checked) delete DS.chartOff[c.dataset.c];
+      else DS.chartOff[c.dataset.c] = 1;
+      apply();
+    };
+  });
+  box.querySelectorAll('button[data-a]').forEach(function (b) {
+    b.onclick = function () {
+      DS.chartOff = DS.chartOff || {};
+      if (b.dataset.a === 'all') live.forEach(m => delete DS.chartOff[m.id]);
+      else live.forEach(m => DS.chartOff[m.id] = 1);
+      apply();
+    };
+  });
+}
+
+function renderCharts(info, cs) {
+  const list = bucketList(info);
+  const grid = document.getElementById('chartGrid');
+  document.getElementById('chartsHead').textContent = info.mode === 'month'
+    ? 'Trends — the twelve months to ' + info.label
+    : 'Trends — every week of ' + info.key.split('-W')[0] + ' with data';
+
+  /* everything this period could show, whether or not it is switched on */
+  const avail = metricsFor(view.tab).filter(m => m.chart !== false && list.some(function (b) {
+    const v = m.get(b.agg);
+    return v != null && isFinite(v) && v !== 0;
+  }));
+  renderChartPicker(avail);
+  const live = avail.filter(chartOn);
+
+  if (!live.length) {
+    grid.innerHTML = '<p class="cap" style="grid-column:1/-1;margin:0 0 8px">' +
+      (avail.length ? 'No charts selected.' : 'Nothing to chart for this period yet.') + '</p>';
+    return;
+  }
+
+  const hasLy = m => list.some(b => b.ly && m.get(b.ly));
+
+  /* The same two comparisons the tiles carry, on the chart itself — the point
+     before is already on screen, but the number it moved by was not. Both use
+     compareSet, so a part period is measured against the same count of days. */
+  const summary = function (m) {
+    if (!cs) return '';
+    const v = m.get(cs.cur);
+    const one = function (arm, fallback) {
+      const ok = arm && !arm.thin;
+      return '<span>' + arrow(ok ? deltaOf(v, m.get(arm.agg)) : null, m.good) +
+        ' <em>vs ' + (arm ? arm.info.short : fallback) + '</em></span>';
+    };
+    return '<div class="chartdelta">' + one(cs.prev, info.mode === 'week' ? 'prev week' : 'prev month') +
+      one(cs.ly, info.mode === 'week' ? 'last year' : 'last year') + '</div>';
+  };
+
+  grid.innerHTML = live.map(function (m) {
+    const leg = hasLy(m)
+      ? '<div class="legend"><span><i style="background:var(--s1)"></i>this ' +
+        (info.mode === 'week' ? 'year' : 'year') + '</span>' +
+        '<span><i style="background:var(--s2)"></i>last year</span></div>'
+      : '<div class="legend"><span><i style="background:var(--s1)"></i>' + m.t + '</span>' +
+        '<span style="color:var(--ink-3)">no last-year data loaded</span></div>';
+    return '<div class="card"><h2>' + m.t + badge('?', m.cap) + '</h2>' +
+      summary(m) + leg +
+      '<svg id="ch_' + m.id + '" viewBox="0 0 560 250" role="img" aria-label="' +
+      m.t + ' over time"></svg></div>';
+  }).join('');
+
+  live.forEach(function (m) {
+    const pts = list.map(function (b, i) {
+      const v = m.get(b.agg);
+      const lvRaw = b.ly ? m.get(b.ly) : null;
+      const lv = (lvRaw === 0 || lvRaw == null || !isFinite(lvRaw)) ? null : lvRaw;
+      const d = b.partial ? null : deltaOf(v, lv);
+      /* the point before is the previous period; neither may be a part one */
+      const before = list[i - 1];
+      const dp = (before && !before.partial && !b.partial)
+        ? deltaOf(v, m.get(before.agg)) : null;
+      return {
+        label: b.p.short, v: (v != null && isFinite(v)) ? v : null, lv: lv,
+        partial: b.partial, sel: b.sel,
+        tip: '<b>' + b.p.label + '</b> · ' + b.p.span +
+             (b.partial ? ' — ' + b.days + ' of ' + b.full + ' days only' : '') +
+             '<br>' + m.t + ' <b>' + m.fmt(v) + '</b>' +
+             (before ? '<br>' + before.p.short + ' ' + m.fmt(m.get(before.agg)) +
+               (dp == null ? '' : ' · ' + signed(dp)) : '') +
+             (lv == null ? '' : '<br>last year ' + m.fmt(lv) +
+               (d == null ? '' : ' · ' + signed(d))),
+      };
+    });
+    trendChart('ch_' + m.id, pts, { kind: view.mode === 'week' ? 'line' : m.kind, axis: m.axis });
+  });
+}
+
+/* ---------- KPI strip ---------- */
+function renderKpis(info, cs, rows, prevRows) {
+  const cur = cs.cur;
+  const margin = rows.reduce((s, x) => s + (x.marginTotal || 0), 0);
+  const prodSales = rows.reduce((s, x) => s + x.sales, 0);
+  const be = prodSales ? margin / prodSales : null;
+  const tacos = cur.sales ? cur.spend / cur.sales : null;
+  const head = (be && tacos) ? tacos / be : null;
+  const pMargin = prevRows ? prevRows.reduce((s, x) => s + (x.marginTotal || 0), 0) : null;
+
+  const solid = a => (a && !a.thin) ? a : null;
+  const both = function (m) {
+    const v = m.get(cur);
+    const p = solid(cs.prev), l = solid(cs.ly);
+    return '<span class="dl">' + arrow(p ? deltaOf(v, m.get(p.agg)) : null, m.good) +
+      ' <em>vs ' + (cs.prev ? cs.prev.info.short : 'prev') + '</em></span>' +
+      '<span class="dl">' + arrow(l ? deltaOf(v, m.get(l.agg)) : null, m.good) +
+      ' <em>vs ' + (cs.ly ? cs.ly.info.label.replace(' 20', ' ’') : 'last yr') + '</em></span>';
+  };
+
+  const tile = (lab, val, deltas, note, why) =>
+    '<div class="kpi"><span class="lab">' + lab + (why ? badge('?', why) : '') +
+    '</span><span class="val">' + val +
+    '</span><div class="deltas">' + (deltas || '') + '</div>' +
+    (note ? '<span class="note">' + note + '</span>' : '') + '</div>';
+
+  document.getElementById('kpis').innerHTML = KPI_TABS[view.tab].map(function (id) {
+    if (id === '#margin') {
+      return tile('Contribution margin', money(margin),
+        '<span class="dl">' + arrow(deltaOf(margin, pMargin), 1) +
+        ' <em>vs previous pull</em></span>',
+        be == null ? 'needs landed cost' : pct(be) + ' of revenue, before ads',
+        'What is left of revenue after the landed cost of the goods, the Amazon referral ' +
+        'fee and fulfilment — and before advertising, storage, returns and your own time. ' +
+        'It is the pot that advertising is paid out of. Only products with a landed cost ' +
+        'on file are counted, so this is a floor, not a total.');
+    }
+    if (id === '#headroom') {
+      /* This used to be labelled "Ad headroom" while showing the share of the
+         ceiling already spent — the opposite of what the word means. */
+      return tile('Ad room used', head == null ? '—' : pct(head, 0), '',
+        (head == null ? 'needs landed cost and ad spend'
+                      : pct(tacos, 1) + ' spent of ' + pct(be, 1) + ' break-even') +
+        (head == null ? '' : '<div class="meter"><span style="width:' +
+          Math.min(100, head * 100).toFixed(1) + '%"></span></div>'),
+        '<b>Break-even TACOS</b> is the contribution margin written as a share of revenue: ' +
+        (be == null ? 'it needs landed cost to compute. ' : pct(be, 1) + ' here. ') +
+        'Spend exactly that much of revenue on advertising and contribution reaches zero. ' +
+        '<br><br><b>Ad room used</b> is TACOS divided by break-even — how much of that ' +
+        'ceiling is already spent. ' +
+        (head == null ? '' : pct(tacos, 1) + ' of ' + pct(be, 1) + ' is ' + pct(head, 0) +
+         ', leaving ' + pct(1 - head, 0) + ' unused. ') +
+        'Low is not automatically good: unused room can also mean growth left on the table. ' +
+        'Past 100% every extra advertised sale costs more than it brings in.');
+    }
+    const m = METRIC_BY_ID[id];
+    let note = null;
+    if (id === 'spend' && cur.days) {
+      note = cur.adDays ? cur.adDays + ' of ' + cur.days + ' days tracked' : 'no advertising data';
+    } else if (id === 'conv') {
+      const ex = METRIC_BY_ID.convEx.get(cur);
+      note = ex == null ? 'needs the All Orders file to split out Subscribe &amp; Save'
+                        : pct(ex, 1) + ' excluding Subscribe &amp; Save';
+    }
+    return tile(m.t, m.fmt(m.get(cur)), both(m), note, m.cap);
+  }).join('');
+}
+
+/* ---------- comparison section ---------- */
+function renderCompare(info, cs) {
+  const notes = [];
+  if (cs.partial) {
+    notes.push('<b>' + info.label + '</b> has ' + cs.span + ' of ' + cs.full +
+      ' days so far, so both comparisons are cut to their first ' + cs.span +
+      ' days as well — like against like.');
+  }
+  [cs.prev, cs.ly].forEach(function (a) {
+    if (a && a.thin) {
+      notes.push('<b>' + a.info.label + '</b> holds only ' + a.have + ' of those ' +
+        a.want + ' days, so it is shown but not divided into a percentage.');
+    }
+  });
+  if (!cs.prev) notes.push('Nothing loaded for the ' + info.prevName + '.');
+  if (!cs.ly) notes.push('Nothing loaded for the ' + info.lyName +
+    ' — that needs daily exports going back a year.');
+
+  const head = 'Against the ' + info.prevName + ' and the ' + info.lyName + '. ';
+  document.getElementById('cmpTitle').innerHTML = info.label +
+    badge(notes.length ? '!' : '?', head +
+      (notes.length ? notes.join(' ') : info.span + ' — a complete period.'));
+
+  const col = a => a ? a.info.label + (a.thin ? ' <em>(' + a.have + ' d)</em>' : '') : null;
+  document.getElementById('cmpHead').innerHTML =
+    '<th>Metric</th><th>' + info.label + '</th>' +
+    '<th>' + (col(cs.prev) || info.prevName) + '</th><th>Δ</th>' +
+    '<th>' + (col(cs.ly) || info.lyName) + '</th><th>Δ</th>';
+
+  const live = metricsFor(view.tab).filter(function (m) {
+    return [cs.cur, cs.prev && cs.prev.agg, cs.ly && cs.ly.agg]
+      .some(a => a && m.get(a) != null && m.get(a) !== 0);
+  });
+
+  document.getElementById('cmpRows').innerHTML = live.map(function (m) {
+    const v = m.get(cs.cur);
+    const cell = function (a) {
+      if (!a) return '<td>—</td><td>—</td>';
+      const x = m.get(a.agg);
+      return '<td>' + m.fmt(x) + '</td><td>' +
+        (a.thin ? '<span class="flat">—</span>' : arrow(deltaOf(v, x), m.good)) + '</td>';
+    };
+    return '<tr><td>' + m.t + '</td><td class="big">' + m.fmt(v) + '</td>' +
+      cell(cs.prev) + cell(cs.ly) + '</tr>';
+  }).join('');
+}
+
+/* ---------- product table ----------
+ * Every numeric cell is a handle: clicking it opens that product's history of
+ * that number across the by-ASIN pulls. m is which product metric the cell
+ * shows. */
+const COLS = [
+  { k: 'name', m: 'sales', t: 'Product',
+    why: 'Name and product line come from your landed-cost file. <b>FBM</b> marks a product ' +
+      'Amazon does not ship, where the fulfilment cost used is your own shipping cost rather ' +
+      'than an FBA fee.',
+    f: r => '<span class="pname">' + r.name + '</span>' +
+      '<span class="grp">' + r.group + (r.fbm ? ' · FBM' : '') + '</span>' },
+  { k: 'sessions', m: 'sessions', t: 'Sessions',
+    why: 'Visits to this product\'s detail page. Amazon repeats one ASIN\'s sessions down ' +
+      'every one of its SKU rows; these are counted once. Sessions across products add up to ' +
+      'more than the account total, because one visit can look at several.',
+    f: r => int(r.sessions) },
+  { k: 'conversion', m: 'conversion', t: 'Conversion',
+    why: 'Order items divided by this product\'s sessions. The second line takes out orders ' +
+      'carrying the Subscribe &amp; Save discount, which arrive without anyone visiting the page.',
+    f: r => pct(r.conversion) +
+      (r.convEx == null ? '' : '<span class="grp">' + pct(r.convEx, 1) + ' ex SnS</span>') },
+  { k: 'snsShare', m: 'snsShare', t: 'SnS share',
+    why: 'Share of this product\'s order items on Subscribe &amp; Save. Everyday products run ' +
+      'high, short-course ones run low — and that changes what a customer is worth beyond the ' +
+      'first order.',
+    f: r => r.snsShare == null ? '—' : pct(r.snsShare, 0) },
+  { k: 'buyBox', m: 'buyBox', t: 'Buy Box',
+    why: 'Share of page views where you held the featured offer. Below 90% is shown red — the ' +
+      'usual causes are a competing offer, a suppressed listing or going out of stock.',
+    f: r => r.buyBox == null ? '—' :
+      '<span class="' + (r.buyBox < 0.9 ? 'down' : '') + '">' + pct(r.buyBox) + '</span>' },
+  { k: 'price', m: 'price', t: 'Avg price',
+    why: 'Revenue divided by units over this window — what was actually paid, after ' +
+      'promotions and the Subscribe &amp; Save discount, not the list price.',
+    f: r => money2(r.price) },
+  { k: 'units', m: 'units', t: 'Units', why: 'Units ordered in this window.',
+    f: r => int(r.units) },
+  { k: 'sales', m: 'sales', t: 'Revenue', why: 'Ordered product sales in this window.',
+    f: r => money(r.sales) },
+  { k: 'salesDelta', m: 'sales', t: 'Revenue Δ',
+    why: 'Against the by-ASIN pull before this one, and only when the two cover a similar ' +
+      'number of days.',
+    f: r => arrow(r.salesDelta, 1) },
+  { k: 'margin', m: 'margin', t: 'Margin / unit',
+    why: 'Average price &minus; landed cost &minus; Amazon referral fee &minus; fulfilment. ' +
+      'Before advertising, storage and returns. Blank means no landed cost on file for it.',
+    f: r => money2(r.margin) },
+  { k: 'marginTotal', m: 'marginTotal', t: 'Margin',
+    why: 'Margin per unit multiplied by units sold — what this product contributed before ads.',
+    f: r => money(r.marginTotal) },
+  { k: 'breakEven', m: 'breakEven', t: 'B/E TACOS',
+    why: '<b>Break-even TACOS.</b> The margin per unit written as a share of the price, which ' +
+      'is the share of this product\'s revenue you could spend on advertising it before ' +
+      'contribution reaches zero. Spend under it and the product still pays; spend over it and ' +
+      'every advertised sale costs more than it brings in.<br><br>Red under 20%, amber under ' +
+      '35%, green above. A low figure is not a bad product — it is a product that cannot carry ' +
+      'much advertising.<br><br>It treats every sale as a one-off. Where the SnS share is high, ' +
+      'the first order is worth more than this suggests, because the repeats cost nothing to win.',
+    f: r => r.breakEven == null ? '—' :
+      '<span class="badge ' + (r.breakEven < 0.2 ? 'b-crit' : r.breakEven < 0.35 ? 'b-warn' : 'b-good') +
+      '">' + pct(r.breakEven) + '</span>' },
+];
+
+/* What a single product's history can be charted on. */
+const PMETRICS = [
+  { id: 'sales', t: 'Revenue', get: r => r.sales, fmt: money, axis: axisMoney, kind: 'bars', good: 1 },
+  { id: 'units', t: 'Units', get: r => r.units, fmt: int, axis: axisInt, kind: 'bars', good: 1 },
+  { id: 'sessions', t: 'Sessions', get: r => r.sessions, fmt: int, axis: axisInt, kind: 'bars', good: 1 },
+  { id: 'pageViews', t: 'Page views', get: r => r.pageViews, fmt: int, axis: axisInt, kind: 'bars', good: 1 },
+  { id: 'conversion', t: 'Conversion', get: r => r.conversion, fmt: v => pct(v, 1), axis: axisPct, kind: 'line', good: 1 },
+  { id: 'snsShare', t: 'SnS share', get: r => r.snsShare, fmt: v => pct(v, 1), axis: axisPct, kind: 'line', good: 1 },
+  { id: 'buyBox', t: 'Buy Box', get: r => r.buyBox, fmt: v => pct(v, 1), axis: axisPct, kind: 'line', good: 1 },
+  { id: 'price', t: 'Avg price', get: r => r.price, fmt: money2, axis: axisMoney, kind: 'line', good: 0 },
+  { id: 'margin', t: 'Margin / unit', get: r => r.margin, fmt: money2, axis: axisMoney, kind: 'line', good: 1 },
+  { id: 'marginTotal', t: 'Margin', get: r => r.marginTotal, fmt: money, axis: axisMoney, kind: 'bars', good: 1 },
+  { id: 'breakEven', t: 'B/E TACOS', get: r => r.breakEven, fmt: v => pct(v, 1), axis: axisPct, kind: 'line', good: 1 },
+];
+const PM_BY_ID = {};
+PMETRICS.forEach(m => PM_BY_ID[m.id] = m);
+
+/* asinForKey walks every row of a pull, and the detail view asks for all of
+   them at once — so the answers are kept for the life of one render. */
+let _pullCache = {};
+function pullRows(key) {
+  if (!_pullCache[key]) _pullCache[key] = asinForKey(DS, key);
+  return _pullCache[key];
+}
+
+function renderTable(all, shownRange, prevRange, info) {
+  const rows = all.filter(r => view.group === 'All' || r.group === view.group)
+    .slice().sort(function (a, b) {
+      const x = a[view.sort], y = b[view.sort];
+      if (typeof x === 'string') return x.localeCompare(y) * view.dir * -1;
+      return ((x == null ? -Infinity : x) - (y == null ? -Infinity : y)) * view.dir;
+    });
+
+  /* The by-ASIN export is pulled for a window of its own choosing. Saying which
+     window these numbers are really from is the difference between a report and
+     a guess — so a mismatch keeps a coloured mark, not a silent one. */
+  const exact = shownRange.from === info.from && shownRange.to === info.to;
+  const note = (exact
+    ? 'Pulled for exactly this period.' +
+      (prevRange ? ' Revenue Δ is against ' + rangeLabel(prevRange.from, prevRange.to) + '.' : '')
+    : 'These product rows come from the by-ASIN pull covering <b>' +
+      rangeLabel(shownRange.from, shownRange.to) + '</b>, which is <b>not</b> the same span as ' +
+      info.label + ' (' + info.span + '). The figures above the table are from the ' +
+      'daily records and do cover ' + info.label + '.') +
+    ' Click any number to see that product\'s history of it.' +
+    '<br><br>The <b>Conversion</b> in this table is measured against each product\'s own ' +
+    'sessions, and those sum to more than the account total — one visit can touch several ' +
+    'products, and Amazon counts it once for the account and once for each. So the total ' +
+    'row here reads lower than the Conversion tile at the top of the page. The tile is the ' +
+    'one to quote; this column is for ranking products against each other.';
+  document.getElementById('tableTitle').innerHTML =
+    'Products Overview' + badge(exact ? '?' : '!',
+      '<b>' + rangeLabel(shownRange.from, shownRange.to) + '</b> · ' + rows.length +
+      ' products. ' + note);
+
+  const groups = ['All'].concat(all.map(r => r.group).filter((v, i, a) => a.indexOf(v) === i).sort());
+  document.getElementById('groupFilters').innerHTML = groups.map(g =>
+    '<button class="chip" type="button" aria-pressed="' + (g === view.group) +
+    '" data-g="' + g + '">' + g + '</button>').join('');
+  document.querySelectorAll('#groupFilters .chip').forEach(b =>
+    b.onclick = () => { view.group = b.dataset.g; view.open = null; render(); });
+
+  const cols = COLS.filter(c => c.k !== 'salesDelta' || prevRange);
+
+  document.getElementById('headRow').innerHTML = cols.map(c =>
+    '<th data-k="' + c.k + '">' + c.t + (c.why ? badge('?', c.why) : '') +
+    (view.sort === c.k ? ' <span class="ar">' + (view.dir < 0 ? '▼' : '▲') + '</span>' : '') +
+    '</th>').join('');
+  document.querySelectorAll('#headRow th').forEach(th => th.onclick = () => {
+    const k = th.dataset.k;
+    if (view.sort === k) view.dir *= -1; else { view.sort = k; view.dir = -1; }
+    render();
+  });
+
+  const sum = f => rows.reduce((s, r) => s + (f(r) || 0), 0);
+  const tS = sum(r => r.sales), tU = sum(r => r.units), tOI = sum(r => r.orderItems),
+        tSe = sum(r => r.sessions), tM = sum(r => r.marginTotal), tPS = sum(r => r.prevSales),
+        tOO = sum(r => r.oItems), tSn = sum(r => r.snsItems);
+
+  const open = view.open;
+  document.getElementById('rows').innerHTML = rows.map(function (r) {
+    const isOpen = open && r.asin === open.asin;
+    return '<tr data-a="' + r.asin + '"' + (isOpen ? ' class="on"' : '') + '>' +
+      cols.map(c => '<td class="cell' +
+        (isOpen && c.m === open.metric && c.k !== 'name' ? ' picked' : '') +
+        '" data-m="' + c.m + '">' + c.f(r) + '</td>').join('') + '</tr>' +
+      (isOpen ? '<tr class="detail"><td colspan="' + cols.length + '">' +
+        detail(r, open.metric, shownRange) + '</td></tr>' : '');
+  }).join('') +
+    '<tr class="tot"><td>Total' + (view.group === 'All' ? '' : ' · ' + view.group) + '</td>' +
+    '<td>' + int(tSe) + '</td><td>' + pct(tSe ? tOI / tSe : null) +
+    (tOO ? '<span class="grp">' + pct((tOO - tSn) / tSe, 1) + ' ex SnS</span>' : '') + '</td>' +
+    '<td>' + (tOO ? pct(tSn / tOO, 0) : '—') + '</td><td>—</td>' +
+    '<td>' + money2(tU ? tS / tU : null) + '</td><td>' + int(tU) + '</td>' +
+    '<td>' + money(tS) + '</td>' +
+    (prevRange ? '<td>' + arrow(deltaOf(tS, tPS), 1) + '</td>' : '') +
+    '<td>—</td><td>' + money(tM) + '</td>' +
+    '<td>' + pct(tS ? tM / tS : null) + '</td></tr>';
+
+  document.querySelectorAll('#rows td.cell').forEach(function (td) {
+    td.onclick = function () {
+      const asin = td.parentNode.dataset.a;
+      const m = td.dataset.m;
+      view.open = (open && open.asin === asin && open.metric === m) ? null
+                : { asin: asin, metric: m };
+      render();
+    };
+  });
+
+  if (open) drawProductChart(open.asin, open.metric);
+}
+
+/** One product's history of one number, across every by-ASIN pull stored. */
+function productPoints(asin, metricId, shownRange) {
+  const pm = PM_BY_ID[metricId] || PM_BY_ID.sales;
+  return asinRanges(DS).map(function (rg) {
+    const hit = pullRows(rg.key).find(x => x.asin === asin);
+    const v = hit ? pm.get(hit) : null;
+    const a = fromKey(rg.from), z = fromKey(rg.to);
+    return {
+      label: a.getDate() + '–' + z.getDate() + ' ' + DMON[a.getMonth()],
+      v: (v != null && isFinite(v)) ? v : null,
+      sel: shownRange && rg.key === shownRange.key,
+      tip: '<b>' + rangeLabel(rg.from, rg.to) + '</b><br>' + pm.t + ' ' + pm.fmt(v) +
+           (hit ? '' : '<br>not in this pull'),
+      _rg: rg, _pm: pm,
+    };
+  });
+}
+
+function detail(r, metricId, shownRange) {
+  const pm = PM_BY_ID[metricId] || PM_BY_ID.sales;
+  const pts = productPoints(r.asin, pm.id, shownRange);
+  const withData = pts.filter(p => p.v != null);
+  const prev = withData.length > 1 ? withData[withData.length - 2].v : null;
+  const cur = pm.get(r);
+
+  const chips = PMETRICS.filter(m => pm.id === m.id || pts.some(function (p) {
+    const hit = pullRows(p._rg.key).find(x => x.asin === r.asin);
+    const v = hit ? m.get(hit) : null;
+    return v != null && isFinite(v);
+  })).map(m => '<button class="chip" type="button" data-pm="' + m.id +
+    '" aria-pressed="' + (m.id === pm.id) + '">' + m.t + '</button>').join('');
+
+  const facts = [
+    ['This pull', pm.fmt(cur)],
+    ['Pull before', pm.fmt(prev) + ' ' + arrow(deltaOf(cur, prev), pm.good)],
+    ['Pulls on record', String(withData.length)],
+    ['SKUs', r.skus.length + ' · ' + (r.fbm === true ? 'FBM' : r.fbm === false ? 'FBA' : 'no cost data')],
+  ];
+
+  const why = 'One point per by-ASIN pull, labelled by the days it covers — not by calendar ' +
+    'month, because the pull decides its own span. The ringed one is the pull the table is ' +
+    'showing. If you want a clean month-by-month product history, pull the by-ASIN export ' +
+    'once per whole month.';
+  return '<div class="det">' +
+    '<div class="dethead"><h3>' + r.name + ' · ' + r.asin + ' — ' + pm.t +
+    badge(withData.length > 1 ? '?' : '!', withData.length > 1 ? why
+      : 'Only one by-ASIN pull is on record, so there is nothing to compare against yet. ' + why) +
+    '</h3><div class="filters">' + chips + '</div></div>' +
+    '<div class="detfacts">' + facts.map(f =>
+      '<div class="dcell"><span>' + f[0] + '</span><b>' + f[1] + '</b></div>').join('') + '</div>' +
+    '<svg id="pdetail" viewBox="0 0 1100 260" role="img" aria-label="' + pm.t +
+    ' for ' + r.name + '"></svg></div>';
+}
+
+function drawProductChart(asin, metricId) {
+  const pm = PM_BY_ID[metricId] || PM_BY_ID.sales;
+  const range = bestAsinRangeForView();
+  trendChart('pdetail', productPoints(asin, pm.id, range),
+    { kind: pm.kind, axis: pm.axis, wide: true });
+  document.querySelectorAll('#rows .det .chip').forEach(function (b) {
+    b.onclick = function (e) {
+      e.stopPropagation();
+      view.open = { asin: asin, metric: b.dataset.pm };
+      render();
+    };
+  });
+}
+
+let _info = null;
+let _viewRange = null;
+const bestAsinRangeForView = () => _viewRange;
+
+/* ---------- masthead ----------
+ * The band is the only part of the page that is about the brand rather than
+ * about Amazon, so everything brand-specific is gathered here: name, report
+ * title, colour, logo. Copying this page to another brand is four fields. */
+
+const BAND_DEFAULT = '#7F4B3E';
+
+const hex2rgb = function (hex) {
+  const c = String(hex || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(c)) return [138, 82, 68];
+  return [0, 2, 4].map(i => parseInt(c.substr(i, 2), 16));
+};
+const rgb2hex = a => '#' + a.map(v =>
+  Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+/** Mix a colour t of the way toward another — the softening, in one place. */
+const mixTo = (hex, t, to) => rgb2hex(hex2rgb(hex).map((v, i) => v + (to[i] - v) * t));
+
+/** White or near-black, whichever the band colour can actually carry. */
+function bandInk(hex) {
+  const c = String(hex || '').replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(c)) return '#F7E9CE';
+  const lin = function (i) {
+    const v = parseInt(c.substr(i, 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  const L = 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+  /* 0.197 is where white and near-black give the same contrast ratio. */
+  return L > 0.197 ? '#191512' : '#F7E9CE';
+}
+
+/** Contrast ratio between two sRGB triples. */
+function contrastOf(a, b) {
+  const lum = function (c) {
+    const f = c.map(function (v) {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2];
+  };
+  const x = lum(a), y = lum(b);
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+
+/* what the page background actually is, in each theme */
+const PLANE_LIGHT = [245, 246, 248];
+const PLANE_DARK = [13, 13, 13];
+
+/**
+ * The band, translucent.
+ *
+ * A translucent band lets the page through, which is the look asked for — but
+ * it also means the colour behind the text differs between light and dark
+ * themes. So the ink is chosen by testing both composites and keeping whichever
+ * reads acceptably against the worse of the two, rather than assuming.
+ */
+const CREAM = [247, 233, 206], DEEP_INK = [25, 21, 18];
+const MIN_CONTRAST = 4.5;
+
+function bandPaint(base, alpha) {
+  const a = Math.max(0.5, Math.min(1, (alpha == null ? 92 : alpha) / 100));
+
+  /* How well a candidate band reads, once the page shows through it in each
+     theme and the better of the two inks is chosen. */
+  const score = function (rgb) {
+    const over = p => rgb.map((v, i) => v * a + p[i] * (1 - a));
+    const onL = over(PLANE_LIGHT), onD = over(PLANE_DARK);
+    const worst = c => Math.min(contrastOf(c, onL), contrastOf(c, onD));
+    const wc = worst(CREAM), wi = worst(DEEP_INK);
+    return { ink: wc >= wi ? CREAM : DEEP_INK, ratio: Math.max(wc, wi),
+             light: onL, dark: onD };
+  };
+
+  /**
+   * A mid-tone band carries neither cream nor near-black at 4.5:1 — that is a
+   * property of the colour, not something a cleverer ink can fix. So when the
+   * chosen colour cannot hold text, it is walked toward black or white, in
+   * whichever direction gets there sooner, by the smallest step that works.
+   * The hue is kept; only the depth moves, and the panel says it happened.
+   */
+  let rgb = hex2rgb(base);
+  let best = score(rgb), shifted = 0;
+  if (best.ratio < MIN_CONTRAST) {
+    /* Walk in the direction the colour is already going — a dark band gets
+       darker, a pale one paler. Flipping a deep brown to pale pink would clear
+       the contrast bar and destroy the design, so the other direction is only
+       tried if its own cannot get there. */
+    const ownLum = contrastOf(rgb, [0, 0, 0]) > contrastOf(rgb, [255, 255, 255]);
+    const dirs = ownLum ? [[255, 255, 255], [0, 0, 0]] : [[0, 0, 0], [255, 255, 255]];
+    let found = null;
+    dirs.forEach(function (to) {
+      if (found) return;
+      for (let t = 0.05; t <= 0.8; t += 0.05) {
+        const c = hex2rgb(mixTo(base, t, to));
+        const sc = score(c);
+        if (sc.ratio >= MIN_CONTRAST) { found = { rgb: c, s: sc }; shifted = t; return; }
+      }
+    });
+    if (found) { rgb = found.rgb; best = found.s; }
+  }
+
+  /* a whisper of a lift at the top, so the band is not a flat slab — the old
+     135deg three-stop gradient read as a smudge across the corner */
+  const rgba = (c, o) => 'rgba(' + c.map(Math.round).join(',') + ',' + o + ')';
+  const lift = rgb.map(v => v + (255 - v) * 0.07);
+
+  return {
+    background: 'linear-gradient(180deg,' + rgba(lift, a) + ' 0%,' + rgba(rgb, a) + ' 100%)',
+    color: rgb2hex(best.ink),
+    ratio: best.ratio,
+    shifted: shifted,
+    light: best.light,
+    dark: best.dark,
+  };
+}
+
+function renderMasthead(info) {
+  const band = DS.bandColor || BAND_DEFAULT;
+  const mh = document.getElementById('masthead');
+  const paint = bandPaint(band, DS.bandAlpha);
+  mh.style.background = paint.background;
+  mh.style.color = paint.color;
+
+  document.getElementById('brandName').textContent = DS.brand || 'Brand';
+
+  const bits = [DS.reportTitle || 'Amazon Performance Report',
+                view.tab === 'ads' ? 'Advertising' : 'Sales'];
+  /* "Aug 2026 · 1–31 Aug 2026" says the same thing twice. A week number does
+     not tell anyone which days it was, so that one keeps its span. */
+  if (info) bits.push(info.mode === 'week' ? info.label + ' · ' + info.span : info.label);
+  document.getElementById('mhSub').textContent = bits.join('  ·  ');
+
+  const last = lastDataDay();
+  document.getElementById('stamp').textContent = last ? 'Data through ' + last : '';
+
+  const logo = document.getElementById('mhLogo');
+  const src = mastheadLogo(paint);
+  if (src) { logo.src = src; logo.hidden = false; }
+  else { logo.removeAttribute('src'); logo.hidden = true; }
+}
+
+/**
+ * '' means the reader asked for no logo at all; anything else is their own
+ * image; null or missing falls back to the built-in Red-Tail lockup, in
+ * whichever version the band colour can carry.
+ */
+function mastheadLogo(paint) {
+  /* the sign-in screen paints a masthead before any dataset exists */
+  const d = DS || {};
+  if (d.logo === '') return null;
+  if (d.logo) return d.logo;
+  const p = paint || bandPaint(d.bandColor || BAND_DEFAULT, d.bandAlpha);
+  /* the cream wordmark goes with the cream ink, whichever way that fell */
+  return p.color.toLowerCase() === '#f7e9ce' ? LOGO_ON_DARK : LOGO_ON_LIGHT;
+}
+
+/* ---------- period controls ---------- */
+function renderTabs() {
+  document.querySelectorAll('#tabs .tab').forEach(function (b) {
+    b.setAttribute('aria-selected', b.dataset.t === view.tab);
+    b.onclick = function () {
+      if (view.tab === b.dataset.t) return;
+      view.tab = b.dataset.t;
+      render();
+    };
+  });
+}
+
+function renderPeriods(info) {
+  document.querySelectorAll('#modes .mbtn').forEach(b => {
+    b.setAttribute('aria-pressed', b.dataset.m === view.mode);
+    b.onclick = function () {
+      if (view.mode === b.dataset.m) return;
+      /* Keep the reader where they were: the week containing the month they
+         were looking at, and the month containing the week. */
+      const cur = periodInfo(view.mode, view.key);
+      view.mode = b.dataset.m;
+      view.open = null;
+      view.key = null;
+      if (cur) {
+        const last = lastDataDay();
+        const anchor = last && last < cur.to ? last : cur.to;
+        const want = view.mode === 'week' ? weekKeyOf(fromKey(anchor)) : anchor.slice(0, 7);
+        if (availablePeriods(view.mode).indexOf(want) >= 0) view.key = want;
+      }
+      render();
+    };
+  });
+
+  const all = availablePeriods(view.mode);
+  const years = all.map(k => k.split('-')[0]).filter((v, i, a) => a.indexOf(v) === i).sort().reverse();
+
+  const opt = function (k) {
+    const p = periodInfo(view.mode, k);
+    return '<option value="' + k + '"' + (k === info.key ? ' selected' : '') + '>' +
+      (view.mode === 'week' ? 'W' + k.split('-W')[1] + ' · ' + p.span : p.label) + '</option>';
+  };
+  const inYear = y => all.filter(k => k.split('-')[0] === y).slice().reverse().map(opt).join('');
+
+  const sel = document.getElementById('periodSel');
+  sel.innerHTML = years.length < 2
+    ? inYear(years[0])
+    : years.map(y => '<optgroup label="' + y + '">' + inYear(y) + '</optgroup>').join('');
+  sel.value = info.key;
+  sel.onchange = function () { view.key = sel.value; view.open = null; render(); };
+}
+
+/* ---------- master render ---------- */
+function render() {
+  migrateAsin(DS);
+  _pullCache = {};
+  _noteSeq = 0;
+  Object.keys(NOTES).forEach(k => delete NOTES[k]);
+  hideTip();
+
+  renderTabs();
+
+  const all = availablePeriods(view.mode);
+  if (!view.key || all.indexOf(view.key) < 0) view.key = all[all.length - 1] || null;
+
+  const empty = !all.length;
+  document.getElementById('emptyState').hidden = !empty;
+  document.getElementById('reportBody').hidden = empty;
+  document.getElementById('periodSel').hidden = empty;
+  if (empty) {
+    document.getElementById('periodSel').innerHTML = '';
+    renderMasthead(null);
+    return;
+  }
+
+  const info = periodInfo(view.mode, view.key);
+  _info = info;
+  renderMasthead(info);
+  renderPeriods(info);
+
+  const cs = compareSet(info);
+  const rangeNow = bestAsinRange(DS, info.from, info.to);
+  const rangePrev = prevAsinRange(DS, rangeNow);
+  _viewRange = rangeNow;
+
+  let rows = [], prevRows = null;
+  if (rangeNow) {
+    rows = pullRows(rangeNow.key);
+    /* Subscribe & Save is counted from the order-level file over exactly the
+       window the by-ASIN pull covers, so the two line up. */
+    const split = snsForRange(DS, rangeNow.from, rangeNow.to);
+    rows.forEach(function (r) {
+      const x = split[r.asin];
+      r.oItems = x ? x[0] : null;
+      r.snsItems = x ? x[2] : null;
+      r.snsShare = (x && x[0]) ? x[2] / x[0] : null;
+      r.convEx = (x && x[0] && r.sessions) ? (x[0] - x[2]) / r.sessions : null;
+    });
+    if (rangePrev) {
+      prevRows = pullRows(rangePrev.key);
+      const by = {};
+      prevRows.forEach(p => by[p.asin] = p.sales);
+      rows.forEach(function (r) {
+        r.prevSales = by[r.asin] != null ? by[r.asin] : null;
+        r.salesDelta = deltaOf(r.sales, r.prevSales);
+      });
+    } else {
+      rows.forEach(r => { r.prevSales = null; r.salesDelta = null; });
+    }
+  }
+
+  renderKpis(info, cs, rows, prevRows);
+  renderCompare(info, cs);
+  renderCharts(info, cs);
+
+  /* Products are a sales question. The advertising exports carry no ASIN. */
+  const showProducts = view.tab === 'sales';
+  const wrap = document.getElementById('tablewrap');
+  const none = document.getElementById('noAsin');
+  wrap.hidden = !showProducts || !rangeNow;
+  none.hidden = !showProducts || !!rangeNow;
+  if (showProducts && rangeNow) renderTable(rows, rangeNow, rangePrev, info);
+  else if (showProducts) {
+    none.innerHTML = '<b>No by-ASIN data yet</b>Everything above comes from the daily ' +
+      'Sales and Traffic export. Per-product rows need the Detail Page Sales and Traffic ' +
+      'export, dropped in with the dates it covers.';
+  }
+  document.getElementById('adsNote').hidden = view.tab !== 'ads';
+  wireBadges();
+}
+
+
+/* ===== 13_update.js ===== */
+/* ============================================================================
+ *  UPDATE PANEL — drop files in, get a new copy of the page out
+ * ========================================================================= */
+
+const PASS_HASH = '5be355af0f30f7e098ae260faecd1b7aabe3b6fb576e41dcdbbd5b41ded4b16f';        // sha-256 of the passphrase
+/* Built as two halves so the build step, which replaces the literal above,
+   cannot also rewrite the test for whether it was replaced. The earlier
+   version compared PASS_HASH against the same substituted string, which made
+   the comparison always false and let every passphrase through. */
+const HASH_SET = /^[0-9a-f]{64}$/.test(PASS_HASH);
+let unlocked = false;
+
+async function sha256(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function logLine(level, text) {
+  const box = document.getElementById('log');
+  const p = document.createElement('p');
+  p.className = 'logline ' + level;
+  p.innerHTML = text;
+  box.prepend(p);
+}
+
+/* The by-ASIN export carries no dates at all, so the window comes from you —
+   and it is usually a part month, because the pull happens mid-month. */
+function askRange() {
+  const f = document.getElementById('pFrom').value;
+  const t = document.getElementById('pTo').value;
+  if (!f || !t) throw new Error('Set the dates this by-ASIN export covers before dropping it in.');
+  if (f > t) throw new Error('The start date is after the end date.');
+  return { from: f, to: t };
+}
+
+async function handleFiles(fileList) {
+  /* Copy the list first. Clearing the input mid-loop would empty the live
+     FileList underneath us, and only the first file would ever be read. */
+  const files = Array.prototype.slice.call(fileList);
+  for (const file of files) {
+    try {
+      const res = await readFile(file);
+      let msg;
+      if (res.kind === 'daily') {
+        const r = mergeDaily(DS, readDaily(res.objs));
+        msg = r.added + ' new day(s), ' + r.replaced + ' replaced';
+      } else if (res.kind === 'asin') {
+        const rg = askRange();
+        const rows = readAsin(res.objs);
+        const r = mergeAsin(DS, rows, rg.from, rg.to);
+        msg = '<b>' + rangeLabel(rg.from, rg.to) + '</b> — ' + res.objs.length +
+              ' SKU rows folded into ' + r.after + ' products' +
+              (r.before ? ' (replaced ' + r.before + ')' : '');
+      } else if (res.kind === 'ads') {
+        const r = mergeAds(DS, res.rows);
+        msg = r.matched + ' day(s) matched' + (r.orphan ? ', ' + r.orphan + ' with no traffic row' : '');
+      } else if (res.kind === 'page') {
+        const r = mergeDataset(DS, res.ds);
+        msg = r.days + ' day(s), ' + r.windows + ' by-ASIN window(s), ' + r.costs +
+              ' cost(s), ' + r.fees + ' fee record(s) taken across — anything already ' +
+              'here was left alone';
+      } else if (res.kind === 'orders') {
+        const rows = readOrders(res.rows, DS.tz);
+        const r = mergeOrders(DS, rows);
+        const sn = rows.reduce((a, x) => a + x.snsItems, 0);
+        const it = rows.reduce((a, x) => a + x.items, 0);
+        msg = r.added + ' new day(s), ' + r.replaced + ' replaced · ' + it +
+              ' order items, ' + sn + ' on Subscribe &amp; Save (' +
+              (it ? (sn / it * 100).toFixed(1) : '0') + '%)';
+      } else if (res.kind === 'logo') {
+        DS.logo = res.dataUri;
+        msg = 'stored in the masthead · ' + Math.round(res.dataUri.length / 1024) + ' KB';
+      } else if (res.kind === 'cogs') {
+        msg = mergeCogs(DS, readCogs(res.objs)).count + ' product cost(s)';
+      } else if (res.kind === 'fees') {
+        msg = mergeFees(DS, readFees(res.objs)).count + ' fee record(s)';
+      } else if (res.kind === 'plan') {
+        msg = mergePlan(DS, readPlan(res.objs)).count + ' planned month(s)';
+      }
+      logLine('ok', FILE_LABEL[res.kind] + ' · ' + file.name + ' — ' + msg);
+      DS.log.unshift({ at: new Date().toISOString().slice(0, 16).replace('T', ' '),
+                       file: file.name, kind: res.kind, msg: msg.replace(/<[^>]+>/g, '') });
+    } catch (err) {
+      logLine('bad', file.name + ' — ' + err.message);
+    }
+  }
+  DS.updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
+  DS.log = DS.log.slice(0, 40);
+  showChecks();
+  render();
+  document.getElementById('exportBtn').disabled = false;
+}
+
+function showChecks() {
+  const box = document.getElementById('checks');
+  const c = runChecks(DS);
+  box.innerHTML = c.map(x => '<p class="logline ' + (x.level === 'ok' ? 'ok' :
+    x.level === 'bad' ? 'bad' : 'warn') + '">' + x.text + '</p>').join('');
+}
+
+/* ---------- write a new copy of this page ---------- */
+function exportSite() {
+  const doc = document.documentElement.cloneNode(true);
+
+  // strip anything that is state rather than content
+  doc.querySelectorAll('#log p, #checks p').forEach(n => n.remove());
+  const panel = doc.querySelector('#updatePanel');
+  if (panel) panel.hidden = true;
+  const gate = doc.querySelector('#gate');
+  if (gate) gate.hidden = false;
+  const un = doc.querySelector('#unlocked');
+  if (un) un.hidden = true;
+  const pw = doc.querySelector('#pass');
+  if (pw) pw.setAttribute('value', '');
+
+  // carry the panel's own settings across
+  const carry = function (sel, v) {
+    const n = doc.querySelector(sel);
+    if (n) n.setAttribute('value', v == null ? '' : v);
+  };
+  carry('#brandIn', DS.brand && DS.brand !== 'Brand' ? DS.brand : '');
+  carry('#titleIn', DS.reportTitle || '');
+  carry('#bandIn', DS.bandColor || BAND_DEFAULT);
+  carry('#bandAlpha', DS.bandAlpha == null ? 92 : DS.bandAlpha);
+  carry('#fbmCost', DS.fbmShipping != null ? DS.fbmShipping : '');
+  const tzSel = doc.querySelector('#tzIn');
+  if (tzSel) {
+    tzSel.querySelectorAll('option').forEach(function (o) {
+      if (o.value === (DS.tz || MARKET_TZ)) o.setAttribute('selected', '');
+      else o.removeAttribute('selected');
+    });
+  }
+
+  /* the masthead is repainted on load, but ship it with the right colours so
+     the page never flashes the default band before the script runs */
+  const paint = bandPaint(DS.bandColor || BAND_DEFAULT, DS.bandAlpha);
+  const mh = doc.querySelector('#masthead');
+  if (mh) mh.setAttribute('style', 'background:' + paint.background + ';color:' + paint.color);
+  const lg = doc.querySelector('#mhLogo');
+  if (lg) {
+    const src = mastheadLogo(paint);
+    if (src) { lg.setAttribute('src', src); lg.removeAttribute('hidden'); }
+    else { lg.removeAttribute('src'); lg.setAttribute('hidden', ''); }
+  }
+
+  // replace the embedded dataset with the current one
+  doc.querySelector('#dataset').textContent = JSON.stringify(DS);
+
+  // the rendered DOM is rebuilt on load, so ship it empty and small
+  ['kpis', 'rows', 'headRow', 'periodSel', 'groupFilters', 'chartGrid',
+   'cmpHead', 'cmpRows'].forEach(function (id) {
+    const n = doc.querySelector('#' + id); if (n) n.innerHTML = '';
+  });
+
+  const html = '<!doctype html>\n' + doc.outerHTML;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  logLine('ok', 'Downloaded index.html — drag it onto Netlify to publish.');
+}
+
+/* ---------- the date range for the by-ASIN export ---------- */
+function initRangePicker() {
+  const from = document.getElementById('pFrom');
+  const to = document.getElementById('pTo');
+  const out = document.getElementById('rangeEcho');
+
+  const echo = function () {
+    if (!from.value || !to.value) { out.textContent = 'Set both dates.'; return; }
+    if (from.value > to.value) { out.textContent = 'The start date is after the end date.'; return; }
+    const n = daysBetween(from.value, to.value) + 1;
+    const stored = bestAsinRange(DS, from.value, to.value);
+    const clash = stored && stored.from === from.value && stored.to === to.value;
+    out.innerHTML = 'Stored as <b>' + rangeLabel(from.value, to.value) + '</b> · ' + n +
+      ' day' + (n === 1 ? '' : 's') + (clash ? ' · replaces the pull already there' : '');
+  };
+
+  const set = function (a, b) { from.value = dayKey(a); to.value = dayKey(b); echo(); };
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  document.querySelectorAll('#quick button').forEach(function (b) {
+    b.onclick = function () {
+      const k = b.dataset.q;
+      if (k === 'mtd') set(new Date(today.getFullYear(), today.getMonth(), 1), today);
+      else if (k === 'lastmonth') set(new Date(today.getFullYear(), today.getMonth() - 1, 1),
+                                      new Date(today.getFullYear(), today.getMonth(), 0));
+      else if (k === 'thismonth') set(new Date(today.getFullYear(), today.getMonth(), 1),
+                                      new Date(today.getFullYear(), today.getMonth() + 1, 0));
+      else if (k === 'lastweek') { const ws = addDays(weekStartOf(today), -7); set(ws, addDays(ws, 6)); }
+      else if (k === 'thisweek') { const ws = weekStartOf(today); set(ws, addDays(ws, 6)); }
+      else if (k === 'data') {
+        const l = lastDataDay();
+        if (l) set(new Date(fromKey(l).getFullYear(), fromKey(l).getMonth(), 1), fromKey(l));
+      }
+    };
+  });
+
+  from.addEventListener('change', echo);
+  to.addEventListener('change', echo);
+
+  // default: the month so far, up to the newest day the page already knows about
+  const l = lastDataDay();
+  const end = l ? fromKey(l) : today;
+  set(new Date(end.getFullYear(), end.getMonth(), 1), end);
+}
+
+/* ---------- wiring ---------- */
+function initUpdate() {
+  const gate = document.getElementById('gate');
+  const form = document.getElementById('gateForm');
+
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const v = document.getElementById('pass').value;
+    if (HASH_SET && await sha256(v) !== PASS_HASH) {
+      document.getElementById('gateMsg').textContent = 'That passphrase does not match.';
+      return;
+    }
+    unlocked = true;
+    gate.hidden = true;
+    document.getElementById('unlocked').hidden = false;
+    showChecks();
+  });
+
+  document.getElementById('toggleUpdate').onclick = function () {
+    const p = document.getElementById('updatePanel');
+    p.hidden = !p.hidden;
+    if (!p.hidden) {
+      p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (unlocked) showChecks();
+    }
+  };
+
+  const drop = document.getElementById('drop');
+  const input = document.getElementById('fileInput');
+  drop.addEventListener('click', () => input.click());
+  drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+  input.addEventListener('change', function () {
+    const picked = Array.prototype.slice.call(input.files);
+    input.value = '';                       // safe now: the list is already copied
+    handleFiles(picked);
+  });
+
+  ['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.add('over');
+  }));
+  ['dragleave', 'drop'].forEach(t => drop.addEventListener(t, e => {
+    e.preventDefault(); drop.classList.remove('over');
+  }));
+  drop.addEventListener('drop', e =>
+    handleFiles(Array.prototype.slice.call(e.dataTransfer.files)));
+
+  document.getElementById('exportBtn').onclick = exportSite;
+  document.getElementById('saveBtn').onclick = saveToSite;
+  document.getElementById('signOut').onclick = async function () {
+    await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+    location.reload();
+  };
+
+  /* A mid-tone band carries no readable text; say so rather than shipping a
+     header the brand cannot read. */
+  const bandNote = function () {
+    const n = document.getElementById('bandMsg');
+    if (!n) return;
+    const p = bandPaint(DS.bandColor || BAND_DEFAULT, DS.bandAlpha);
+    n.innerHTML = p.shifted
+      ? 'Deepened ' + Math.round(p.shifted * 100) + '% so the text stays readable — ' +
+        'that shade could not carry either cream or black at 4.5:1.'
+      : 'Text reads at ' + p.ratio.toFixed(1) + ':1 in both themes.';
+    n.className = p.shifted ? 'sub warnline' : 'sub';
+  };
+
+  const touched = () => {
+    render();
+    bandNote();
+    document.getElementById('exportBtn').disabled = false;
+  };
+
+  const brand = document.getElementById('brandIn');
+  brand.value = DS.brand && DS.brand !== 'Brand' ? DS.brand : '';
+  brand.addEventListener('input', function () {
+    DS.brand = brand.value.trim() || 'Brand'; touched();
+  });
+
+  const title = document.getElementById('titleIn');
+  title.value = DS.reportTitle || '';
+  title.addEventListener('input', function () {
+    DS.reportTitle = title.value.trim() || null; touched();
+  });
+
+  const band = document.getElementById('bandIn');
+  band.value = DS.bandColor || BAND_DEFAULT;
+  band.addEventListener('input', function () {
+    DS.bandColor = band.value; touched();
+  });
+  const alpha = document.getElementById('bandAlpha');
+  alpha.value = DS.bandAlpha == null ? 92 : DS.bandAlpha;
+  alpha.addEventListener('input', function () {
+    DS.bandAlpha = +alpha.value; touched();
+  });
+  bandNote();
+  document.getElementById('bandReset').onclick = function () {
+    DS.bandColor = BAND_DEFAULT; DS.bandAlpha = 92;
+    band.value = BAND_DEFAULT; alpha.value = 92; touched();
+  };
+  document.getElementById('logoReset').onclick = function () {
+    DS.logo = null; logLine('ok', 'Masthead back to the Red-Tail logo.'); touched();
+  };
+  document.getElementById('logoClear').onclick = function () {
+    DS.logo = ''; logLine('ok', 'Masthead logo removed.'); touched();
+  };
+
+  const fbm = document.getElementById('fbmCost');
+  if (DS.fbmShipping != null) fbm.value = DS.fbmShipping;
+  fbm.addEventListener('change', function () {
+    const v = parseFloat(fbm.value);
+    DS.fbmShipping = isFinite(v) && v >= 0 ? v : null;
+    showChecks(); render();
+    document.getElementById('exportBtn').disabled = false;
+  });
+
+  const tz = document.getElementById('tzIn');
+  tz.value = DS.tz || MARKET_TZ;
+  tz.addEventListener('change', function () {
+    DS.tz = tz.value;
+    logLine('warn', 'Marketplace timezone set to ' + tz.value +
+      '. Drop the All Orders file in again — its days were bucketed with the old one.');
+    touched();
+  });
+
+  initRangePicker();
+}
+
+/* ---------- talking to the site ----------
+ * The page works two ways. On Netlify with the functions deployed it fetches
+ * its data from /api/data, which will not answer without a session cookie —
+ * so an unauthenticated visitor receives an empty shell and nothing else.
+ * Opened as a plain file it falls back to whatever dataset is embedded in it,
+ * which is how the single-file version has always worked.
+ */
+let MODE = 'file';
+let ROLE = 'admin';
+
+async function gzipString(str) {
+  if (typeof CompressionStream === 'undefined') return new Blob([str]);
+  const cs = new CompressionStream('gzip');
+  return new Response(new Blob([str]).stream().pipeThrough(cs)).blob();
+}
+
+async function saveToSite() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.textContent = 'Saving…';
+  try {
+    const body = await gzipString(JSON.stringify(DS));
+    const res = await fetch('/api/save', {
+      method: 'POST', credentials: 'same-origin', body: body,
+      headers: { 'x-report-write': '1', 'x-report-gzip':
+        typeof CompressionStream === 'undefined' ? '0' : '1' },
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(out.error || ('save failed (' + res.status + ')'));
+    logLine('ok', 'Saved to the site at ' + out.savedAt + ' — it is live now, ' +
+      'no deploy needed.');
+    document.getElementById('exportBtn').disabled = false;
+  } catch (err) {
+    logLine('bad', 'Could not save: ' + err.message +
+      ' — your work is still here in the page, so try again or download a copy.');
+  }
+  btn.disabled = false;
+  btn.textContent = was;
+}
+
+function applyRole() {
+  const admin = ROLE === 'admin';
+  /* On the site the session already established who this is, so the panel's
+     own passphrase would be a second lock on the same door. In the single-file
+     copy it is the only lock there is, so it stays. */
+  if (MODE === 'server') {
+    unlocked = admin;
+    document.getElementById('gate').hidden = true;
+    document.getElementById('unlocked').hidden = !admin;
+  }
+  document.getElementById('toggleUpdate').hidden = !admin;
+  document.getElementById('signOut').hidden = MODE !== 'server';
+  const tag = document.getElementById('roleTag');
+  tag.hidden = MODE !== 'server';
+  tag.textContent = admin ? 'Signed in' : 'View only';
+  const save = document.getElementById('saveBtn');
+  save.hidden = MODE !== 'server';
+  document.getElementById('saveHint').textContent = MODE === 'server'
+    ? 'saving publishes straight away — the download is just a backup'
+    : 'then drag it onto Netlify';
+}
+
+function showLogin(brand) {
+  document.getElementById('login').hidden = false;
+  document.getElementById('app').hidden = true;
+  if (brand) document.getElementById('loginBrand').textContent = brand;
+  const paint = bandPaint(BAND_DEFAULT, 92);
+  const band = document.getElementById('loginBand');
+  band.style.background = paint.background;
+  band.style.color = paint.color;
+  const lg = document.getElementById('loginLogo');
+  const src = mastheadLogo(paint);
+  if (src) lg.src = src; else lg.hidden = true;
+
+  const form = document.getElementById('loginForm');
+  const msg = document.getElementById('loginMsg');
+  form.onsubmit = async function (e) {
+    e.preventDefault();
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true; msg.hidden = true;
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: document.getElementById('loginPw').value }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(out.error || 'Sign-in failed.');
+      document.getElementById('login').hidden = true;
+      document.getElementById('app').hidden = false;
+      await loadFromSite();
+    } catch (err) {
+      msg.textContent = err.message;
+      msg.hidden = false;
+      document.getElementById('loginPw').value = '';
+    }
+    btn.disabled = false;
+  };
+  document.getElementById('loginPw').focus();
+}
+
+async function loadFromSite() {
+  const res = await fetch('/api/data', { credentials: 'same-origin' });
+  const out = await res.json();
+  ROLE = out.role || 'viewer';
+  begin(out.dataset || emptyDataset());
+}
+
+/** Everything that has to happen once a dataset is in hand. */
+function begin(ds) {
+  DS = ds;
+  if (!DS || !DS.daily) DS = emptyDataset();
+  DS.asin = DS.asin || {}; DS.cogs = DS.cogs || {}; DS.fees = DS.fees || {};
+  DS.orders = DS.orders || {}; DS.plan = DS.plan || {}; DS.log = DS.log || [];
+  DS.refLow = DS.refLow ?? 0.08; DS.refHigh = DS.refHigh ?? 0.15;
+  DS.refBreak = DS.refBreak ?? 10; DS.refMin = DS.refMin ?? 0.30;
+  migrateAsin(DS);
+  initUpdate();
+  applyRole();
+  render();
+  document.getElementById('exportBtn').disabled = MODE === 'file';
+}
+
+/* ---------- boot ---------- */
+(async function boot() {
+  let embedded = null;
+  try { embedded = JSON.parse(document.getElementById('dataset').textContent); }
+  catch (e) { embedded = null; }
+  if (embedded && !embedded.daily) embedded = null;
+
+  /* Opened straight off disk there is no site to ask, and the attempt itself
+     would log a CORS failure on every open. */
+  let res = null;
+  if (location.protocol !== 'file:') {
+    try { res = await fetch('/api/data', { credentials: 'same-origin' }); }
+    catch (e) { res = null; }
+  }
+
+  const isJson = res && /json/.test(res.headers.get('content-type') || '');
+  if (res && res.status === 401) {
+    /* the functions are live and this browser has no session */
+    MODE = 'server';
+    showLogin(embedded && embedded.brand);
+    return;
+  }
+  if (res && res.ok && isJson) {
+    MODE = 'server';
+    const out = await res.json();
+    ROLE = out.role || 'viewer';
+    begin(out.dataset || emptyDataset());
+    return;
+  }
+  /* no functions here — this is the single-file copy */
+  MODE = 'file';
+  begin(embedded || emptyDataset());
+})();
+
+</script>
+</body></html>
