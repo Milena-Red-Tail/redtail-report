@@ -5,7 +5,10 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-
+[[redirects]]
+  from = "/b/*"
+  to = "/index.html"
+  status = 200
 # The report file is replaced by saving, not by deploying, so it must never
 # be served from a stale cache.
 [[headers]]
