@@ -164,7 +164,51 @@ header{position:sticky;top:0;z-index:20;background:var(--plane);
   color:var(--ink-3);margin:16px 0 8px}
 #pdfPick h3:first-child{margin-top:0}
 #printDoc{display:none}
-.chartpick{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:0 0 14px}
+/* the section heading and its control share a line */
+.sechead-row{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin:28px 0 12px}
+.sechead-row .sechead{margin:0}
+
+/* a menu of checkboxes — a native select cannot hold them, so this is a button
+   and a panel, closed on Escape and on a click anywhere else */
+.dropwrap{position:relative;flex:none}
+.drop-btn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+/* the width/height attributes lose to the button's flex layout, so the size
+   is set here — without it the chevron stretches to the button's full height */
+.drop-btn svg{width:11px;height:7px;flex:none;opacity:.6;transition:transform .15s ease}
+.drop-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.dropmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:30;min-width:250px;
+  max-height:min(60vh,420px);overflow:auto;background:var(--surface);
+  border:1px solid var(--ring);border-radius:12px;box-shadow:var(--shadow);padding:8px}
+.chartpick{display:flex;flex-direction:column;gap:2px;align-items:stretch}
+.cmp-top{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  margin-bottom:12px}
+.cmp-top h2{margin:0}
+.daymenu{min-width:290px;display:flex;flex-direction:column;gap:1px}
+.daymenu .dhead{font-size:.72rem;color:var(--ink-3);padding:2px 10px 8px;line-height:1.4}
+.daymenu .ck{border:0;border-radius:8px;padding:6px 10px;font-size:.8rem;width:100%;
+  justify-content:space-between}
+.daymenu .ck .dv{color:var(--ink-3);font-variant-numeric:tabular-nums;margin-left:auto}
+.daymenu .ck.out{color:var(--ink-3);text-decoration:line-through}
+.daymenu .ckall{margin:6px 0 0;padding-top:8px;border-top:1px solid var(--grid);
+  display:flex;gap:6px;justify-content:flex-end}
+
+/* what is loaded, and the way back out of it */
+.loaded{display:flex;flex-direction:column;gap:2px;margin:10px 0 4px}
+.loaded .lgroup{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);margin:12px 0 4px}
+.loaded .lrow{display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:8px;
+  font-size:.82rem}
+.loaded .lrow:nth-child(odd){background:var(--surface-2)}
+.loaded .lrow .lname{flex:1;min-width:0}
+.loaded .lrow .lsub2{color:var(--ink-3);font-size:.76rem}
+.loaded .lrow .btn{padding:3px 10px;font-size:.72rem}
+.loaded .lrow .btn.arm{background:var(--crit);border-color:var(--crit);color:#fff}
+.loaded .lempty{font-size:.82rem;color:var(--ink-3);padding:6px 0}
+.dropmenu .ck{border:0;border-radius:8px;padding:7px 10px;font-size:.82rem;width:100%}
+.dropmenu .ck:has(input:checked){color:var(--ink)}
+.dropmenu .ckall{margin:6px 0 0;padding-top:8px;border-top:1px solid var(--grid);
+  display:flex;gap:6px;justify-content:flex-end}
 .ck{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;color:var(--ink-2);
   background:var(--surface);border:1px solid var(--ring);border-radius:999px;
   padding:5px 13px 5px 10px;cursor:pointer;user-select:none;white-space:nowrap}
@@ -176,6 +220,7 @@ header{position:sticky;top:0;z-index:20;background:var(--plane);
 .ck.off{opacity:.45;cursor:default}
 .ck.off:hover{background:transparent}
 .ckall{display:inline-flex;gap:6px;margin-left:6px}
+.dropmenu .ckall{margin-left:0}
 .charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
 @media(max-width:840px){.charts{grid-template-columns:1fr}}
 .card{background:var(--surface);border:1px solid var(--ring);border-radius:10px;
@@ -235,7 +280,24 @@ table.cmp tbody tr:hover{background:var(--surface-2)}
 .thead .cap{font-size:.76rem;color:var(--ink-3);margin:6px 0 0;max-width:86ch}
 .warnline{border-left:3px solid var(--warn);padding:6px 10px!important;background:var(--plane);
   border-radius:0 6px 6px 0;color:var(--ink-2)!important}
-.filters{display:flex;gap:6px;flex-wrap:wrap}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+#prodSearch{font:inherit;font-size:.82rem;padding:6px 12px;border-radius:999px;
+  border:1px solid var(--ring);background:var(--surface);color:var(--ink);width:230px;
+  max-width:100%}
+#prodSearch:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+#groupSel{appearance:none;-webkit-appearance:none;-moz-appearance:none;font:inherit;
+  font-size:.82rem;padding:6px 30px 6px 12px;border-radius:999px;
+  border:1px solid var(--ring);background-color:var(--surface);color:var(--ink);
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' fill='none' stroke='%23898781' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 11px center;cursor:pointer;
+  max-width:190px;text-overflow:ellipsis}
+#groupSel:focus-visible{outline:2px solid var(--s1);outline-offset:1px}
+#searchNote{white-space:nowrap}
+/* a button that reads as a link — "show all" belongs in the sentence, not
+   beside it as a control */
+.linky{border:0;background:none;padding:0;font:inherit;color:var(--s1);cursor:pointer;
+  text-decoration:underline}
+.linky:hover{color:var(--ink)}
 .chip{border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);font:inherit;
   font-size:.76rem;font-weight:600;padding:5px 11px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--plane);border-color:var(--ink)}
@@ -466,6 +528,15 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
 
   <div id="unlocked" hidden>
     <div class="rangebox">
+      <b>Data Amazon does not give you</b>
+      <p class="why">Landed costs and the revenue plan are yours, not Amazon's, so nothing
+        can fetch them — they are typed once and loaded like any other file. Start from the
+        template below; for a brand already set up, the same button hands back what is
+        loaded now, so you edit that copy and drop it straight back in.</p>
+      <div class="prow" id="manualDl"></div>
+    </div>
+
+    <div class="rangebox">
       <b>Dates the by-ASIN export covers</b>
       <p class="why">Amazon's Detail Page Sales and Traffic export contains no dates anywhere
         inside it, so this is the only place the page can learn what it is looking at. Set it
@@ -542,6 +613,13 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
              style="width:90px;font-size:.82rem;padding:6px 9px">
     </div>
 
+    <h3>What is loaded</h3>
+    <p class="why">A file stops being a file the moment it is read — its numbers are folded
+      into the page. So this is not a list of uploads but a list of what they left behind,
+      and removing a line here is how an upload is undone. Re-loading the same span simply
+      replaces it, so this is only needed when a span was wrong.</p>
+    <div id="loadedList"></div>
+
     <div class="cols">
       <div><h3>This session</h3><div id="log"></div></div>
       <div><h3>Checks</h3><div id="checks"></div></div>
@@ -573,21 +651,51 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
   <div class="kpis" id="kpis"></div>
 
   <div class="card" id="cmpCard">
-    <h2 id="cmpTitle">Comparison</h2>
+    <div class="cmp-top">
+      <h2 id="cmpTitle">Comparison</h2>
+      <div class="dropwrap" id="exWrap" hidden>
+        <button class="btn drop-btn" type="button" id="exBtn"
+                aria-expanded="false" aria-controls="exMenu">
+          <span id="exCount">Days in the rate</span>
+          <svg viewBox="0 0 11 7" width="11" height="7" aria-hidden="true"><path d="M1 1l4.5 4.5L10 1"
+            fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+            stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropmenu daymenu" id="exMenu" role="group"
+             aria-label="Days counted in the projection" hidden></div>
+      </div>
+    </div>
     <div class="scroll">
       <table class="cmp"><thead><tr id="cmpHead"></tr></thead><tbody id="cmpRows"></tbody></table>
     </div>
   </div>
 
-  <h2 class="sechead" id="chartsHead">Trends</h2>
-  <div class="chartpick" id="chartPick" role="group" aria-label="Which charts to show"></div>
+  <div class="sechead-row">
+    <h2 class="sechead" id="chartsHead">Trends</h2>
+    <div class="dropwrap">
+      <button class="btn drop-btn" type="button" id="chartPickBtn"
+              aria-expanded="false" aria-controls="chartPick">
+        <span id="chartPickCount">Charts</span>
+        <svg viewBox="0 0 11 7" width="11" height="7" aria-hidden="true"><path d="M1 1l4.5 4.5L10 1"
+          fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+          stroke-linejoin="round"/></svg>
+      </button>
+      <div class="dropmenu chartpick" id="chartPick" role="group"
+           aria-label="Which charts to show" hidden></div>
+    </div>
+  </div>
   <div class="charts" id="chartGrid"></div>
 
   <div class="tablewrap" id="tablewrap">
     <div class="thead">
       <div class="theadrow">
         <h2 id="tableTitle">Products</h2>
-        <div class="filters" id="groupFilters" role="group" aria-label="Filter by product line"></div>
+        <div class="filters">
+          <input type="search" id="prodSearch" placeholder="Search ASIN or name"
+                 autocomplete="off" spellcheck="false" aria-label="Search products">
+          <select id="groupSel" aria-label="Product group"></select>
+          <span class="sub" id="searchNote"></span>
+        </div>
       </div>
     </div>
     <div class="scroll">
@@ -602,13 +710,6 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
     advertising would need the Sponsored Products placement or advertised-product report.
   </div>
 
-  <p class="foot"><b>Conversion</b> is orders per session — Amazon's order-item session
-    percentage. Subscribe &amp; Save orders arrive without a session, so it runs a little high.
-    Margin = price &minus; landed cost &minus; referral fee &minus; fulfilment, before
-    advertising, storage and refunds. Traffic is de-duplicated: Amazon repeats one ASIN's
-    sessions down each of its SKU rows. Weeks run Sunday to Saturday, matching Seller Central.
-    An unfinished period is compared only against the same number of days in the periods it is
-    measured against.</p>
 </div>
 </div>
 <div class="tip" id="tip" role="status"></div>
@@ -1043,17 +1144,45 @@ function readOrders(rows, tz) {
   return Object.keys(by).map(k => by[k]);
 }
 
+/* What the report actually needs from a cost file, which is less than most
+   cost spreadsheets carry:
+     ASIN          the key everything else hangs off
+     Product       the name shown in the table
+     Group         the grouping the dropdown and the filter use
+     TOTAL COGS    the landed cost itself
+     FBM Shipping  only for products Amazon does not ship, where there is no
+                   FBA fee and your own shipping stands in for it
+   The breakdown columns are welcome and are kept, but nothing reads them
+   beyond adding them up when there is no total. Core SKU is not read at all —
+   the SKUs shown against a product come from the by-ASIN export. */
+const COGS_COLS = ['ASIN', 'Product', 'Group', 'TOTAL COGS', 'FBM Shipping'];
+const PLAN_COLS = ['Year', 'Month', 'Plan sales'];
+
 function readCogs(objs) {
   return objs.map(function (o) {
-    const total = o['TOTAL COGS'] != null && o['TOTAL COGS'] !== ''
-      ? toNum(o['TOTAL COGS'])
+    /* A stated total wins; failing that the parts are added up. "Total" is
+       accepted alongside "TOTAL COGS" because that is what the spreadsheets
+       people already keep tend to call it. */
+    const stated = [o['TOTAL COGS'], o['Total'], o['Total COGS']]
+      .find(v => v != null && v !== '');
+    const total = stated != null
+      ? toNum(stated)
       : toNum(o['Landed Manufacturer']) + toNum(o['Pick / Pack / Labeling']) +
         toNum(o['Bundling Material']) + toNum(o['Corrugate']);
     const ship = o['FBM Shipping'];
+    /* Every column of the file is kept beside the total, so downloading it
+       back out returns what was put in — someone's own working columns are
+       not something this page should quietly throw away. Capped, because a
+       cost file is not a place to store a hundred columns of notes. */
+    const raw = {};
+    Object.keys(o).slice(0, 24).forEach(function (c) {
+      if (c && o[c] != null && o[c] !== '') raw[c] = String(o[c]);
+    });
     return { asin: String(o['ASIN'] || '').trim(), name: String(o['Product'] || '').trim(),
              sku: String(o['Core SKU'] || '').trim(),
              group: String(o['Group'] || 'Ungrouped').trim(), cogs: total,
-             fbmShipping: (ship === '' || ship == null) ? null : toNum(ship) };
+             fbmShipping: (ship === '' || ship == null) ? null : toNum(ship),
+             raw: raw };
   }).filter(r => r.asin && r.asin !== 'B0EXAMPLE01');
 }
 
@@ -1074,12 +1203,29 @@ function readFees(objs) {
   return Object.keys(by).map(k => by[k]);
 }
 
+/**
+ * The plan, month by month.
+ *
+ * A working plan sheet usually carries far more than the plan — actuals,
+ * last year, last month — and all of that is ignored here, because the report
+ * already has it from the daily export and would rather compute than trust a
+ * second copy.
+ *
+ * A blank plan cell means no plan, not a plan of nothing. Read as zero, a month
+ * with an empty target showed "$0 plan" and every dollar of revenue as
+ * infinitely over it.
+ */
 function readPlan(objs) {
-  return objs.map(o => ({
-    year: toNum(o['Year']), month: String(o['Month'] || '').trim(),
-    planSales: toNum(o['Plan sales'] ?? o['Planned sales'] ?? o['Plan Sales']),
-    planSpend: toNum(o['Plan spend'] ?? o['Planned spend'] ?? o['Plan Spend']),
-  })).filter(r => r.year && MONTHS.indexOf(r.month) >= 0);
+  const pick = (o, names) => names.map(n => o[n]).find(v => v != null && String(v).trim() !== '');
+  return objs.map(function (o) {
+    const sales = pick(o, ['Plan sales', 'Planned sales', 'Plan Sales', 'PLAN SALES']);
+    const spend = pick(o, ['Plan spend', 'Planned spend', 'Plan Spend', 'PLAN SPEND']);
+    return {
+      year: toNum(o['Year']), month: String(o['Month'] || '').trim(),
+      planSales: sales == null ? null : toNum(sales),
+      planSpend: spend == null ? null : toNum(spend),
+    };
+  }).filter(r => r.year && MONTHS.indexOf(r.month) >= 0 && r.planSales);
 }
 
 /* ---------- read one dropped file ---------- */
@@ -1235,10 +1381,20 @@ function asinRanges(ds) {
 
 /**
  * The stored window that best describes a selected period.
+ *
  * An exact match wins. Otherwise the window that sits most completely inside
  * the selection wins — a 1-15 Aug pull is the right answer for August, and
- * still the right answer for the week of 9 Aug, but never for July.
+ * never for July.
+ *
+ * It has to be mostly about this period, though, and that is what MIN_FIT is
+ * for. A month-long pull overlaps the week of 10 August by seven of its
+ * thirty-one days: showing those thirty-one days of product rows under the
+ * heading of one week is not a near-enough answer, it is the wrong number
+ * with a week's name on it. Below the threshold the answer is nothing, and
+ * the page says so.
  */
+const MIN_FIT = 0.5;
+
 function bestAsinRange(ds, from, to) {
   const all = asinRanges(ds);
   if (!all.length) return null;
@@ -1256,12 +1412,31 @@ function bestAsinRange(ds, from, to) {
       bestScore = score; bestOverlap = overlap; best = r;
     }
   });
-  return best;
+  return bestScore >= MIN_FIT ? best : null;
 }
 
-/** The window immediately before this one — only if it is a fair comparison. */
-function prevAsinRange(ds, r) {
+/**
+ * The by-ASIN pull that stands for the period before this one.
+ *
+ * It used to take whatever pull came last before the current one, which is
+ * only the previous month if that is exactly how you pull. Asking for the pull
+ * covering the previous period instead means the column can honestly be headed
+ * "% MoM" — and when there is no such pull it says nothing rather than
+ * comparing August against a stray week in June.
+ *
+ * prev is the previous period's own from/to. The day counts still have to be
+ * within a third of each other: a fortnight against a month is a number, but
+ * not a comparison.
+ */
+function prevAsinRange(ds, r, prev) {
   if (!r) return null;
+  if (prev) {
+    const p = bestAsinRange(ds, prev.from, prev.to);
+    if (!p || p.key === r.key) return null;
+    const ratio = p.days / r.days;
+    return (ratio >= 0.75 && ratio <= 1.33) ? p : null;
+  }
+  /* no period handed in — fall back to the pull immediately before */
   const earlier = asinRanges(ds).filter(x => x.to < r.from);
   if (!earlier.length) return null;
   const p = earlier[earlier.length - 1];
@@ -1427,9 +1602,151 @@ function aggregate(ds, from, to) {
   return acc;
 }
 
+/**
+ * Where a part period lands if the days left run at the rate of the days so
+ * far — with the option to leave particular days out of that rate.
+ *
+ * What happened, happened: the actual total keeps every day, Prime Day
+ * included. Only the rate applied to the days still to come is taken from the
+ * days you have not excluded. Averaging a Prime Day into the remaining three
+ * weeks is exactly the mistake this is here to avoid.
+ *
+ * Every additive field is extended, and the ratios are then computed off the
+ * result by the metric definitions themselves — projecting a conversion rate
+ * directly would be meaningless arithmetic on a percentage.
+ */
+const RATE_FIELDS = ['sales', 'units', 'sessions', 'spend', 'adSales', 'adOrders',
+  'adUnits', 'ntbOrders', 'ntbSales', 'clicks', 'impressions', 'pvMobile',
+  'pvBrowser', 'unitsRefunded', 'orderItems', 'oItems', 'oUnits', 'snsItems',
+  'snsUnits'];
+
+function projectAgg(ds, from, to) {
+  /* Only a period that is still running can be projected. A month that ended
+     last year and is missing half its days is not "on track" for anything —
+     those days happened, the file is simply short, and drawing a projection
+     over them would invent a past. */
+  if (to < dayKey(new Date())) return null;
+
+  const actual = aggregate(ds, from, to);
+  const full = daysBetween(from, to) + 1;
+  const have = actual.days;
+  const left = full - have;
+  if (!have || left <= 0) return null;          /* nothing to project */
+
+  const skip = ds.exclude || {};
+  const kept = [];
+  dailyList(ds).forEach(function (d) {
+    if (d.date < from || d.date > to) return;
+    if (!skip[d.date]) kept.push(d);
+  });
+  if (!kept.length) return null;                /* every day was excluded */
+
+  /* the rate comes from the kept days only */
+  const rate = aggregateDays(ds, kept);
+  const out = Object.assign({}, actual);
+  RATE_FIELDS.forEach(function (f) {
+    out[f] = (actual[f] || 0) + (rate[f] || 0) / kept.length * left;
+  });
+  out.days = full;
+  out.adDays = actual.adDays + (actual.adDays ? left : 0);
+  out.oDays = actual.oDays + (actual.oDays ? left : 0);
+  out.projected = true;
+  out.have = have;
+  out.left = left;
+  out.excluded = have - kept.length;
+  return out;
+}
+
+/** The same summing as aggregate(), over a list of days handed in. */
+function aggregateDays(ds, days) {
+  const acc = {};
+  RATE_FIELDS.forEach(f => { acc[f] = 0; });
+  const byDate = {};
+  days.forEach(d => { byDate[d.date] = 1; });
+  Object.keys(ds.orders || {}).forEach(function (k) {
+    if (!byDate[k]) return;
+    const o = ds.orders[k];
+    acc.oItems += o.items || 0; acc.oUnits += o.units || 0;
+    acc.snsItems += o.snsItems || 0; acc.snsUnits += o.snsUnits || 0;
+  });
+  days.forEach(function (d) {
+    acc.sales += d.sales || 0; acc.units += d.units || 0;
+    acc.sessions += d.sessions || 0; acc.spend += d.spend || 0;
+    acc.adSales += d.adSales || 0; acc.adOrders += d.adOrders || 0;
+    acc.adUnits += d.adUnits || 0;
+    acc.ntbOrders += d.ntbOrders || 0; acc.ntbSales += d.ntbSales || 0;
+    acc.clicks += d.clicks || 0; acc.impressions += d.impressions || 0;
+    acc.pvMobile += d.pvMobile || 0; acc.pvBrowser += d.pvBrowser || 0;
+    acc.unitsRefunded += d.unitsRefunded || 0; acc.orderItems += d.orderItems || 0;
+  });
+  return acc;
+}
+
+/**
+ * The revenue plan covering a date range.
+ *
+ * The plan file is written a month at a time, which is how targets are set.
+ * A week is not a twelfth of anything, so its share is worked out day by day:
+ * each day carries its own month's plan divided by that month's length. A week
+ * straddling the end of August is then part August plan and part September,
+ * which is what it actually is.
+ */
+function planFor(ds, from, to) {
+  const plan = ds.plan || {};
+  if (!Object.keys(plan).length) return null;
+  let sales = 0, spend = 0, covered = 0, days = 0;
+  const d = fromKey(from), end = fromKey(to);
+  while (d <= end) {
+    const rec = plan[d.getFullYear() + '-' + MONTHS[d.getMonth()]];
+    days++;
+    if (rec && rec.planSales) {
+      const inMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+      sales += (rec.planSales || 0) / inMonth;
+      spend += (rec.planSpend || 0) / inMonth;
+      covered++;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  if (!covered) return null;
+  /* a range only half covered by plans would otherwise read as a halved target */
+  return { sales: sales, spend: spend, days: days, covered: covered,
+           whole: covered === days };
+}
+
+/**
+ * Whether Subscribe & Save is a thing for this brand at all.
+ *
+ * Two brands need this answered the same way. One has never had the All Orders
+ * file loaded, so nothing is known. The other sells nothing on subscription,
+ * so everything is known and it is all zero. Neither wants a column of dashes
+ * or a row of 0% across the report, so both are treated as "there is no
+ * Subscribe & Save here" and the columns simply do not appear.
+ */
+function hasSns(ds) {
+  const o = ds && ds.orders;
+  if (!o) return false;
+  const keys = Object.keys(o);
+  for (let i = 0; i < keys.length; i++) {
+    if ((o[keys[i]].snsItems || 0) > 0) return true;
+  }
+  return false;
+}
+
 /* ---------- checks that run after every merge ---------- */
 function runChecks(ds) {
   const out = [];
+  /* The nag about a missing All Orders file used to sit on the conversion
+     tile, where the brand could read it. It belongs here, where only whoever
+     loads the data can see it — and it says nothing at all for a brand that
+     runs no subscriptions. */
+  if (!Object.keys(ds.orders || {}).length) {
+    out.push({ level: 'info', text: 'No All Orders file loaded. Subscribe &amp; Save ' +
+      'columns are hidden. Load one if this brand runs subscriptions; ignore this if it ' +
+      'does not.' });
+  } else if (!hasSns(ds)) {
+    out.push({ level: 'info', text: 'Order detail is loaded and carries no Subscribe &amp; ' +
+      'Save at all, so those columns are hidden.' });
+  }
   const days = dailyList(ds);
   if (!days.length) { out.push({ level: 'info', text: 'No daily data yet.' }); return out; }
 
@@ -1526,8 +1843,13 @@ const axisInt   = v => Math.abs(v) >= 1000 ? Math.round(v / 1000) + 'k' : String
 const axisPct   = v => (v * 100).toFixed(v > 0 && v < 0.1 ? 1 : 0) + '%';
 
 let DS = null;
-let view = { tab: 'sales', mode: 'month', key: null, group: 'All',
-             sort: 'sales', dir: -1, open: null };
+let view = { tab: 'sales', mode: 'month', key: null, q: '', group: 'All',
+             sort: 'sales', dir: -1, open: null, showAll: false };
+
+/* How many products the table shows before you ask for more. Fifteen is a
+   screenful; a brand with two hundred ASINs should not have to scroll past
+   the long tail to see whether last month was good. */
+const TOP_N = 15;
 
 /* ---------- period model ---------- */
 
@@ -1654,11 +1976,11 @@ const METRICS = [
     cap: 'Revenue divided by units — moves with discounts and with the product mix.',
     get: a => a.units ? a.sales / a.units : null,
     fmt: money2, axis: axisMoney, good: 0, kind: 'line' },
-  { id: 'convEx', tab: 'sales', t: 'Conversion excl. Subscribe & Save',
+  { id: 'convEx', tab: 'sales', sns: true, t: 'Conversion excl. Subscribe & Save',
     cap: "Orders that could have come from a session, over sessions. Every Subscribe & Save order carries the SnS discount in the All Orders file, so they can be taken out — recurring deliveries never involved a visit. This is the number to compare against anyone else's conversion rate.",
     get: a => (a.oDays && a.sessions) ? (a.oItems - a.snsItems) / a.sessions : null,
     fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
-  { id: 'snsShare', tab: 'sales', t: 'Subscribe & Save share of orders',
+  { id: 'snsShare', tab: 'sales', sns: true, t: 'Subscribe & Save share of orders',
     cap: 'Order items carrying the Subscribe & Save discount, as a share of all order items. Counts a subscriber\'s first order as well as the repeats, because Amazon does not distinguish them anywhere in the file.',
     get: a => a.oItems ? a.snsItems / a.oItems : null,
     fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
@@ -1699,14 +2021,19 @@ const METRICS = [
     fmt: v => pct(v, 1), axis: axisPct, good: 1, kind: 'line' },
 ];
 
-const metricsFor = tab => METRICS.filter(m => m.tab === tab || m.tab === 'both');
+/* A brand with no subscriptions is not shown a row of zeroes and a second
+   conversion identical to the first. Filtered here, so the tiles, the charts,
+   the chart picker and the comparison table all agree without each being told
+   separately. */
+const metricsFor = tab => METRICS.filter(m =>
+  (m.tab === tab || m.tab === 'both') && (!m.sns || hasSns(DS)));
 const METRIC_BY_ID = {};
 METRICS.forEach(m => METRIC_BY_ID[m.id] = m);
 
 /* Which tiles sit on top of each tab. A '#' entry is worked out from the
    product rows rather than from the daily records. */
 const KPI_TABS = {
-  sales: ['sales', 'units', 'sessions', 'conv', 'tacos', '#margin'],
+  sales: ['sales', 'units', 'sessions', 'conv', '#plan', '#margin'],
   ads:   ['spend', 'adSales', 'acos', 'tacos', 'adshare', '#headroom'],
 };
 
@@ -1839,20 +2166,24 @@ function trendChart(id, pts, opt) {
     const cap = pts.length <= 3 ? 56 : pts.length <= 6 ? 34 : 18;
     const bw = Math.max(2, Math.min(cap, step / (paired ? 2.8 : 1.9)));
     pts.forEach(function (p, i) {
-      const x0 = paired ? cx(i) - bw - 1 : cx(i) - bw / 2;
+      /* Last year on the left, this year on the right, so a pair reads in the
+         order it happened. The colours stay put: orange has meant last year
+         everywhere in this report, and moving it would break that. */
+      const xThis = paired ? cx(i) + 1 : cx(i) - bw / 2;
+      if (paired && p.lv != null && p.lv > 0) {
+        svgEl('rect', { x: cx(i) - bw - 1, y: y(p.lv), width: bw,
+                        height: Math.max(1, y(base) - y(p.lv)),
+                        rx: 2, fill: 'var(--s2)' }, svg);
+      }
       if (p.v != null && p.v > 0) {
         /* The period you are looking at is ringed, not recoloured — green and
            red are already spoken for by the up and down arrows. */
-        svgEl('rect', { x: x0, y: y(p.v), width: bw, height: Math.max(1, y(base) - y(p.v)),
+        svgEl('rect', { x: xThis, y: y(p.v), width: bw, height: Math.max(1, y(base) - y(p.v)),
                         rx: 2, fill: 'var(--s1)', 'fill-opacity': p.partial ? 0.45 : 1,
                         stroke: p.sel ? 'var(--ink)' : 'none', 'stroke-width': 1.5 }, svg);
       }
-      if (paired && p.lv != null && p.lv > 0) {
-        svgEl('rect', { x: cx(i) + 1, y: y(p.lv), width: bw, height: Math.max(1, y(base) - y(p.lv)),
-                        rx: 2, fill: 'var(--s2)' }, svg);
-      }
       if (p.partial && p.v > 0 && pts.length <= 14) {
-        svgEl('text', { class: 'tick', x: paired ? x0 + bw / 2 : cx(i), y: y(p.v) - 6,
+        svgEl('text', { class: 'tick', x: paired ? xThis + bw / 2 : cx(i), y: y(p.v) - 6,
           'text-anchor': 'middle', 'font-weight': 700 }, svg).textContent = 'part';
       }
     });
@@ -1884,6 +2215,23 @@ function trendChart(id, pts, opt) {
         'font-weight': p.sel ? 700 : 400 }, svg).textContent = p.label;
     }
   });
+}
+
+/**
+ * What years the two series on a chart cover.
+ *
+ * A weekly chart is one calendar year against the one before, so the labels
+ * are exact. A monthly chart is the twelve months ending at the period in
+ * view, which normally straddles two years — so it is written as a span
+ * rather than pretending to be a single year.
+ */
+function seriesYears(list) {
+  const years = list.map(b => +String(b.p.key).slice(0, 4)).filter(y => y);
+  if (!years.length) return { cur: 'this year', prev: 'last year' };
+  const lo = Math.min.apply(null, years), hi = Math.max.apply(null, years);
+  if (lo === hi) return { cur: String(hi), prev: String(hi - 1) };
+  const span = (a, b) => a + '–' + String(b).slice(2);
+  return { cur: span(lo, hi), prev: span(lo - 1, hi - 1) };
 }
 
 /* ---------- the buckets a chart runs over ---------- */
@@ -1919,6 +2267,40 @@ function bucketList(info) {
     choice travels with the published page. */
 const chartOn = m => !(DS.chartOff || {})[m.id];
 
+/**
+ * The chart list lives behind a button now. Eight chips wrapping across three
+ * lines above the charts took more room than the first chart did, and the
+ * choice is something you set once and forget.
+ */
+function initChartPicker() {
+  dropdown('chartPickBtn', 'chartPick');
+  dropdown('exBtn', 'exMenu');
+}
+
+/** A button and a panel that behaves like a menu. */
+function dropdown(btnId, menuId) {
+  const btn = document.getElementById(btnId);
+  const menu = document.getElementById(menuId);
+  if (!btn || !menu) return;
+
+  const close = function () {
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+  };
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    btn.setAttribute('aria-expanded', String(open));
+  });
+  /* a click inside the menu is a tick, not a dismissal */
+  menu.addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !menu.hidden) { close(); btn.focus(); }
+  });
+}
+
 function renderChartPicker(live) {
   const box = document.getElementById('chartPick');
   box.innerHTML = live.map(m =>
@@ -1926,6 +2308,13 @@ function renderChartPicker(live) {
     (chartOn(m) ? ' checked' : '') + '>' + m.t + '</label>').join('') +
     '<span class="ckall"><button class="btn tiny" type="button" data-a="all">All</button>' +
     '<button class="btn tiny" type="button" data-a="none">None</button></span>';
+
+  /* the button has to say what is hidden behind it, or turning a chart off
+     looks like the chart vanished */
+  const on = live.filter(chartOn).length;
+  document.getElementById('chartPickCount').textContent =
+    on === live.length ? 'Charts · all ' + live.length
+                       : 'Charts · ' + on + ' of ' + live.length;
 
   const apply = function () {
     renderCharts(_info);
@@ -1977,23 +2366,31 @@ function renderCharts(info, cs) {
   /* The same two comparisons the tiles carry, on the chart itself — the point
      before is already on screen, but the number it moved by was not. Both use
      compareSet, so a part period is measured against the same count of days. */
+  /* "vs Jul" and "vs Aug" side by side read as two months of this year; the
+     second was last August. MoM/WoW and YoY say which comparison it is, and
+     the period each one means is on the hover. */
   const summary = function (m) {
     if (!cs) return '';
     const v = m.get(cs.cur);
-    const one = function (arm, fallback) {
+    const one = function (arm, tag) {
       const ok = arm && !arm.thin;
-      return '<span>' + arrow(ok ? deltaOf(v, m.get(arm.agg)) : null, m.good) +
-        ' <em>vs ' + (arm ? arm.info.short : fallback) + '</em></span>';
+      return '<span' + (arm ? ' title="vs ' + arm.info.label + '"' : '') + '>' +
+        arrow(ok ? deltaOf(v, m.get(arm.agg)) : null, m.good) +
+        ' <em>' + tag + '</em></span>';
     };
-    return '<div class="chartdelta">' + one(cs.prev, info.mode === 'week' ? 'prev week' : 'prev month') +
-      one(cs.ly, info.mode === 'week' ? 'last year' : 'last year') + '</div>';
+    return '<div class="chartdelta">' +
+      one(cs.prev, info.mode === 'week' ? 'WoW' : 'MoM') +
+      one(cs.ly, 'YoY') + '</div>';
   };
 
+  /* "this year / last year" was wrong for the monthly view: the twelve months
+     to August 2026 start in September 2025, so most of that series is not
+     this year at all. The legend names what the bars actually cover. */
+  const yr = seriesYears(list);
   grid.innerHTML = live.map(function (m) {
     const leg = hasLy(m)
-      ? '<div class="legend"><span><i style="background:var(--s1)"></i>this ' +
-        (info.mode === 'week' ? 'year' : 'year') + '</span>' +
-        '<span><i style="background:var(--s2)"></i>last year</span></div>'
+      ? '<div class="legend"><span><i style="background:var(--s2)"></i>' + yr.prev + '</span>' +
+        '<span><i style="background:var(--s1)"></i>' + yr.cur + '</span></div>'
       : '<div class="legend"><span><i style="background:var(--s1)"></i>' + m.t + '</span>' +
         '<span style="color:var(--ink-3)">no last-year data loaded</span></div>';
     return '<div class="card"><h2>' + m.t + badge('?', m.cap) + '</h2>' +
@@ -2039,13 +2436,30 @@ function renderKpis(info, cs, rows, prevRows) {
   const pMargin = prevRows ? prevRows.reduce((s, x) => s + (x.marginTotal || 0), 0) : null;
 
   const solid = a => (a && !a.thin) ? a : null;
+
+  /* The distance to a target, as a signed percentage and then the same
+     distance in money. Both the revenue tile and the plan tile use it, so the
+     two can never end up phrasing the same idea two different ways. */
+  const planGap = function (got, target, label, title) {
+    const gap = got - target;
+    return '<span class="dl"' + (title ? ' title="' + title + '"' : '') + '>' +
+      arrow(target ? gap / target : null, 1) + ' <em>' + label + '</em></span>' +
+      '<span class="dl"><span class="' + (gap >= 0 ? 'up' : 'down') + '">' +
+      (gap >= 0 ? '+' : '\u2212') + money(Math.abs(gap)) + '</span></span>';
+  };
+  /* The same two words the charts and the comparison table use. Every delta in
+     the report now reads MoM / WoW / YoY, with the period it means on hover —
+     one vocabulary rather than three. */
+  const perTag = view.mode === 'week' ? 'WoW' : 'MoM';
   const both = function (m) {
     const v = m.get(cur);
     const p = solid(cs.prev), l = solid(cs.ly);
-    return '<span class="dl">' + arrow(p ? deltaOf(v, m.get(p.agg)) : null, m.good) +
-      ' <em>vs ' + (cs.prev ? cs.prev.info.short : 'prev') + '</em></span>' +
-      '<span class="dl">' + arrow(l ? deltaOf(v, m.get(l.agg)) : null, m.good) +
-      ' <em>vs ' + (cs.ly ? cs.ly.info.label.replace(' 20', ' ’') : 'last yr') + '</em></span>';
+    const one = function (arm, live, tag) {
+      return '<span class="dl"' + (arm ? ' title="vs ' + arm.info.label + '"' : '') + '>' +
+        arrow(live ? deltaOf(v, m.get(live.agg)) : null, m.good) +
+        ' <em>' + tag + '</em></span>';
+    };
+    return one(cs.prev, p, perTag) + one(cs.ly, l, 'YoY');
   };
 
   const tile = (lab, val, deltas, note, why) =>
@@ -2055,10 +2469,21 @@ function renderKpis(info, cs, rows, prevRows) {
     (note ? '<span class="note">' + note + '</span>' : '') + '</div>';
 
   document.getElementById('kpis').innerHTML = KPI_TABS[view.tab].map(function (id) {
+    if (id === '#margin' && !rows.length) {
+      /* No product rows for this period means no landed costs to work from.
+         Summing an empty list gives $0, which reads as "we made nothing" —
+         the truth is that it cannot be worked out. */
+      return tile('Contribution margin', '\u2014', '', 'no data',
+        'Worked out from the per-product rows, so it needs a by-ASIN export ' +
+        'covering this period. Without one there is nothing to compute it from — ' +
+        'the tile is blank rather than zero.');
+    }
     if (id === '#margin') {
       return tile('Contribution margin', money(margin),
-        '<span class="dl">' + arrow(deltaOf(margin, pMargin), 1) +
-        ' <em>vs previous pull</em></span>',
+        '<span class="dl"' + (_viewPrevRange
+            ? ' title="vs ' + rangeLabel(_viewPrevRange.from, _viewPrevRange.to) + '"' : '') +
+        '>' + arrow(deltaOf(margin, pMargin), 1) +
+        ' <em>' + (view.mode === 'week' ? 'WoW' : 'MoM') + '</em></span>',
         be == null ? 'needs landed cost' : pct(be) + ' of revenue, before ads',
         'What is left of revenue after the landed cost of the goods, the Amazon referral ' +
         'fee and fulfilment — and before advertising, storage, returns and your own time. ' +
@@ -2083,16 +2508,59 @@ function renderKpis(info, cs, rows, prevRows) {
         'Low is not automatically good: unused room can also mean growth left on the table. ' +
         'Past 100% every extra advertised sale costs more than it brings in.');
     }
+    if (id === '#plan') {
+      const plan = planFor(DS, info.from, info.to);
+      const proj = projectAgg(DS, info.from, info.to);
+      /* While the period is running, the number worth measuring against the
+         plan is where it is heading, not what is banked so far — a fortnight
+         is always behind a month's target and saying so tells you nothing. */
+      const against = proj ? METRIC_BY_ID.sales.get(proj) : cur.sales;
+      const line = plan == null ? '' :
+        planGap(against, plan.sales, proj ? 'expected vs plan' : 'vs plan',
+          (proj ? 'expected ' : '') + money(against) + ' against a plan of ' +
+          money(plan.sales));
+      return tile('Plan revenue', plan == null ? '\u2014' : money(plan.sales), line,
+        plan == null
+          ? 'no plan loaded for ' + info.label
+          : (proj ? 'expected ' + money(against) : money(against) + ' actual') +
+            (plan.whole ? '' : ' \u00b7 plan covers ' + plan.covered + ' of ' + plan.days + ' days'),
+        'The revenue target for this period, from the plan file you load in the update ' +
+        'panel.<br><br>Plans are written a month at a time, so a <b>week</b> takes its share ' +
+        'day by day: each day carries its own month\'s plan divided by the days in that ' +
+        'month. A week straddling the turn of the month is then part one plan and part the ' +
+        'next, which is what it really is.<br><br>' +
+        (proj
+          ? 'While the period is still running the gap is measured against the ' +
+            '<b>expected</b> figure, not the part-month total — every unfinished month is ' +
+            'behind its own target, and saying so tells you nothing.'
+          : 'The period is complete, so the gap is the real one.') +
+        (plan && !plan.whole
+          ? '<br><br><b>Only ' + plan.covered + ' of these ' + plan.days + ' days have a ' +
+            'plan on file</b>, so the target shown covers just those days.' : ''));
+    }
     const m = METRIC_BY_ID[id];
-    let note = null;
-    if (id === 'spend' && cur.days) {
+    let note = null, planLine = '';
+    if (id === 'sales') {
+      /* Written exactly as the plan tile writes it: the signed distance as a
+         percentage, then the same distance in money. Negative means that much
+         still to find, positive means the plan is already passed. */
+      const plan = planFor(DS, info.from, info.to);
+      if (plan && plan.sales) {
+        const full = daysBetween(info.from, info.to) + 1;
+        planLine = planGap(cur.sales, plan.sales, 'vs plan',
+          money(cur.sales) + ' against a plan of ' + money(plan.sales));
+        note = cur.days < full ? 'day ' + cur.days + ' of ' + full : null;
+      }
+    } else if (id === 'spend' && cur.days) {
       note = cur.adDays ? cur.adDays + ' of ' + cur.days + ' days tracked' : 'no advertising data';
     } else if (id === 'conv') {
-      const ex = METRIC_BY_ID.convEx.get(cur);
-      note = ex == null ? 'needs the All Orders file to split out Subscribe &amp; Save'
-                        : pct(ex, 1) + ' excluding Subscribe &amp; Save';
+      /* Only worth a second line where subscriptions exist. A brand without
+         them was being told, month after month, about a file it has no reason
+         to load. */
+      const ex = hasSns(DS) ? METRIC_BY_ID.convEx.get(cur) : null;
+      if (ex != null) note = pct(ex, 1) + ' excluding Subscribe &amp; Save';
     }
-    return tile(m.t, m.fmt(m.get(cur)), both(m), note, m.cap);
+    return tile(m.t, m.fmt(m.get(cur)), both(m) + planLine, note, m.cap);
   }).join('');
 }
 
@@ -2120,10 +2588,34 @@ function renderCompare(info, cs) {
       (notes.length ? notes.join(' ') : info.span + ' — a complete period.'));
 
   const col = a => a ? a.info.label + (a.thin ? ' <em>(' + a.have + ' d)</em>' : '') : null;
+  /* Two columns both headed Δ leave the reader to work out which is which
+     from the column two places left. Naming them says it outright. */
+  const perTag = info.mode === 'week' ? '% WoW' : '% MoM';
+  /* Where the period lands at the current rate. Only worth a column while the
+     period is unfinished — once it is complete, expected is just the total. */
+  const proj = projectAgg(DS, info.from, info.to);
+  renderExcludeMenu(info, proj);
   document.getElementById('cmpHead').innerHTML =
     '<th>Metric</th><th>' + info.label + '</th>' +
-    '<th>' + (col(cs.prev) || info.prevName) + '</th><th>Δ</th>' +
-    '<th>' + (col(cs.ly) || info.lyName) + '</th><th>Δ</th>';
+    (proj ? '<th>Expected' + badge('?',
+        '<b>Where ' + info.label + ' lands</b> if the ' + proj.left + ' day' +
+        (proj.left === 1 ? '' : 's') + ' still to come run at the rate of the ' +
+        (proj.have - proj.excluded) + ' day' +
+        (proj.have - proj.excluded === 1 ? '' : 's') + ' counted so far.<br><br>' +
+        'The days already banked are counted as they happened — nothing is smoothed ' +
+        'away. Only the rate applied to the days ahead comes from the counted days.' +
+        (proj.excluded ? '<br><br><b>' + proj.excluded + ' day' +
+          (proj.excluded === 1 ? ' is' : 's are') + ' left out of that rate</b> by ' +
+          'your choice, in the button above this table. Their sales still count ' +
+          'towards the month.'
+          : '<br><br>Use <b>Days in the rate</b> above to leave a Prime Day or a ' +
+            'one-off spike out, so it does not lift the whole rest of the month.') +
+        '<br><br>Ratios such as conversion and TACOS are not projected directly — ' +
+        'they are worked out from the projected units, sessions and spend, which is ' +
+        'the only way the arithmetic stays honest.') +
+      '</th><th>' + perTag + ' exp</th>' : '') +
+    '<th>' + (col(cs.prev) || info.prevName) + '</th><th>' + perTag + '</th>' +
+    '<th>' + (col(cs.ly) || info.lyName) + '</th><th>% YoY</th>';
 
   const live = metricsFor(view.tab).filter(function (m) {
     return [cs.cur, cs.prev && cs.prev.agg, cs.ly && cs.ly.agg]
@@ -2138,9 +2630,111 @@ function renderCompare(info, cs) {
       return '<td>' + m.fmt(x) + '</td><td>' +
         (a.thin ? '<span class="flat">—</span>' : arrow(deltaOf(v, x), m.good)) + '</td>';
     };
-    return '<tr><td>' + m.t + '</td><td class="big">' + m.fmt(v) + '</td>' +
+    /* the projected month against the previous whole one — the comparison the
+       part-month figure beside it cannot make */
+    let exp = '';
+    if (proj) {
+      const pv = m.get(proj);
+      const base = cs.prev && !cs.prev.thin ? m.get(cs.prev.agg) : null;
+      exp = '<td>' + (pv == null ? '—' : m.fmt(pv)) + '</td><td>' +
+        (pv == null || base == null ? '<span class="flat">—</span>'
+                                    : arrow(deltaOf(pv, base), m.good)) + '</td>';
+    }
+    return '<tr><td>' + m.t + '</td><td class="big">' + m.fmt(v) + '</td>' + exp +
       cell(cs.prev) + cell(cs.ly) + '</tr>';
   }).join('');
+}
+
+/**
+ * Which days feed the rate behind the Expected column.
+ *
+ * Shown only while the period is unfinished, because that is the only time
+ * anything is being projected. Each day carries its revenue, so a Prime Day is
+ * recognisable without going and looking it up.
+ */
+function renderExcludeMenu(info, proj) {
+  const wrap = document.getElementById('exWrap');
+  if (!proj) { wrap.hidden = true; return; }
+  wrap.hidden = false;
+
+  const skip = DS.exclude || {};
+  const days = dailyList(DS).filter(d => d.date >= info.from && d.date <= info.to);
+  const kept = days.filter(d => !skip[d.date]).length;
+
+  document.getElementById('exCount').textContent = kept === days.length
+    ? 'Rate from all ' + days.length + ' days'
+    : 'Rate from ' + kept + ' of ' + days.length + ' days';
+
+  document.getElementById('exMenu').innerHTML =
+    '<p class="dhead">Untick a day to keep it out of the rate used for the ' +
+    proj.left + ' day' + (proj.left === 1 ? '' : 's') + ' still to come. ' +
+    'Its sales still count towards the month.</p>' +
+    days.map(function (d) {
+      const out = !!skip[d.date];
+      return '<label class="ck' + (out ? ' out' : '') + '">' +
+        '<input type="checkbox" data-d="' + d.date + '"' + (out ? '' : ' checked') + '>' +
+        '<span>' + dayLabel(d.date) + '</span>' +
+        '<span class="dv">' + money(d.sales) + '</span></label>';
+    }).join('') +
+    '<span class="ckall"><button class="btn tiny" type="button" data-x="all">All days</button>' +
+    '</span>';
+
+  document.querySelectorAll('#exMenu input[data-d]').forEach(function (c) {
+    c.onchange = function () {
+      DS.exclude = DS.exclude || {};
+      if (c.checked) delete DS.exclude[c.getAttribute('data-d')];
+      else DS.exclude[c.getAttribute('data-d')] = 1;
+      render();
+      touchedByPicker();
+    };
+  });
+  const all = document.querySelector('#exMenu .btn[data-x="all"]');
+  if (all) all.onclick = function () {
+    DS.exclude = {};
+    render();
+    touchedByPicker();
+  };
+}
+
+/** "Sat 15 Aug" — the weekday matters when you are eyeing a spike. */
+function dayLabel(k) {
+  const d = fromKey(k);
+  const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+  return wd + ' ' + d.getDate() + ' ' + DMON[d.getMonth()];
+}
+
+/** The choice lives in the dataset, so it travels with the report. */
+function touchedByPicker() {
+  const b = document.getElementById('exportBtn');
+  if (b) b.disabled = false;
+}
+
+/**
+ * Wired once, at start-up. The box lives in the markup rather than being drawn
+ * by renderTable, because render() runs on every keystroke and rebuilding the
+ * input would take the caret and the focus with it on each letter typed.
+ */
+function initTableSearch() {
+  const box = document.getElementById('prodSearch');
+  if (!box) return;
+  box.value = view.q || '';
+  box.addEventListener('input', function () {
+    view.q = box.value;
+    view.open = null;          // a detail row for a product now filtered out
+    render();
+  });
+  /* Escape clears, which is what a search box is expected to do */
+  box.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && box.value) { box.value = ''; view.q = ''; render(); }
+  });
+
+  const gs = document.getElementById('groupSel');
+  gs.addEventListener('change', function () {
+    view.group = gs.value;
+    view.showAll = false;      // a narrower list starts from the top again
+    view.open = null;
+    render();
+  });
 }
 
 /* ---------- product table ----------
@@ -2149,50 +2743,83 @@ function renderCompare(info, cs) {
  * shows. */
 const COLS = [
   { k: 'name', m: 'sales', t: 'Product',
-    why: 'Name and product line come from your landed-cost file. <b>FBM</b> marks a product ' +
+    why: 'Name and group come from your landed-cost file. <b>FBM</b> marks a product ' +
       'Amazon does not ship, where the fulfilment cost used is your own shipping cost rather ' +
       'than an FBA fee.',
     f: r => '<span class="pname">' + r.name + '</span>' +
-      '<span class="grp">' + r.group + (r.fbm ? ' · FBM' : '') + '</span>' },
+      '<span class="grp">' + r.group + (r.fbm ? ' · FBM' : '') + '</span>',
+    tot: t => 'Total' + (t.hidden ? '<span class="grp">all ' + t.n + ' products, not just the ' +
+      t.shown + ' shown</span>' : '') },
+  ,
+  { k: 'units', m: 'units', t: 'Units', why: 'Units ordered in this window.',
+    f: r => int(r.units),
+    tot: t => int(t.units),
+  },
+  ,
+  { k: 'sales', m: 'sales', t: 'Revenue', why: 'Ordered product sales in this window.',
+    f: r => money(r.sales),
+    tot: t => money(t.sales),
+  },
+  ,
+  { k: 'salesDelta', m: 'sales', t: '% MoM',
+    why: 'Revenue against the by-ASIN pull covering the period before this one — the ' +
+      'previous month in the monthly view, the previous week in the weekly one.<br><br>' +
+      'It is blank when there is no such pull, or when the two cover day counts more than ' +
+      'a third apart: a fortnight measured against a full month produces a number, but not ' +
+      'a comparison.',
+    f: r => arrow(r.salesDelta, 1),
+    tot: t => arrow(deltaOf(t.sales, t.prevSales), 1),
+  },
+  ,
   { k: 'sessions', m: 'sessions', t: 'Sessions',
     why: 'Visits to this product\'s detail page. Amazon repeats one ASIN\'s sessions down ' +
       'every one of its SKU rows; these are counted once. Sessions across products add up to ' +
       'more than the account total, because one visit can look at several.',
-    f: r => int(r.sessions) },
+    f: r => int(r.sessions),
+    tot: t => int(t.sessions),
+  },
+  ,
   { k: 'conversion', m: 'conversion', t: 'Conversion',
     why: 'Order items divided by this product\'s sessions. The second line takes out orders ' +
       'carrying the Subscribe &amp; Save discount, which arrive without anyone visiting the page.',
     f: r => pct(r.conversion) +
-      (r.convEx == null ? '' : '<span class="grp">' + pct(r.convEx, 1) + ' ex SnS</span>') },
+      (r.convEx == null || !hasSns(DS) ? ''
+        : '<span class="grp">' + pct(r.convEx, 1) + ' ex SnS</span>'),
+    tot: t => pct(t.sessions ? t.orderItems / t.sessions : null) +
+      (t.oItems && hasSns(DS)
+        ? '<span class="grp">' + pct((t.oItems - t.snsItems) / t.sessions, 1) +
+          ' ex SnS</span>' : ''),
+  },
+  ,
   { k: 'snsShare', m: 'snsShare', t: 'SnS share',
     why: 'Share of this product\'s order items on Subscribe &amp; Save. Everyday products run ' +
       'high, short-course ones run low — and that changes what a customer is worth beyond the ' +
       'first order.',
-    f: r => r.snsShare == null ? '—' : pct(r.snsShare, 0) },
+    f: r => r.snsShare == null ? '—' : pct(r.snsShare, 0),
+    tot: t => t.oItems ? pct(t.snsItems / t.oItems, 0) : '—',
+  },
+  ,
   { k: 'buyBox', m: 'buyBox', t: 'Buy Box',
     why: 'Share of page views where you held the featured offer. Below 90% is shown red — the ' +
       'usual causes are a competing offer, a suppressed listing or going out of stock.',
     f: r => r.buyBox == null ? '—' :
-      '<span class="' + (r.buyBox < 0.9 ? 'down' : '') + '">' + pct(r.buyBox) + '</span>' },
+      '<span class="' + (r.buyBox < 0.9 ? 'down' : '') + '">' + pct(r.buyBox) + '</span>',
+    tot: () => '—',
+  },
+  ,
   { k: 'price', m: 'price', t: 'Avg price',
     why: 'Revenue divided by units over this window — what was actually paid, after ' +
       'promotions and the Subscribe &amp; Save discount, not the list price.',
-    f: r => money2(r.price) },
-  { k: 'units', m: 'units', t: 'Units', why: 'Units ordered in this window.',
-    f: r => int(r.units) },
-  { k: 'sales', m: 'sales', t: 'Revenue', why: 'Ordered product sales in this window.',
-    f: r => money(r.sales) },
-  { k: 'salesDelta', m: 'sales', t: 'Revenue Δ',
-    why: 'Against the by-ASIN pull before this one, and only when the two cover a similar ' +
-      'number of days.',
-    f: r => arrow(r.salesDelta, 1) },
-  { k: 'margin', m: 'margin', t: 'Margin / unit',
-    why: 'Average price &minus; landed cost &minus; Amazon referral fee &minus; fulfilment. ' +
-      'Before advertising, storage and returns. Blank means no landed cost on file for it.',
-    f: r => money2(r.margin) },
+    f: r => money2(r.price),
+    tot: t => money2(t.units ? t.sales / t.units : null),
+  },
+  ,
   { k: 'marginTotal', m: 'marginTotal', t: 'Margin',
     why: 'Margin per unit multiplied by units sold — what this product contributed before ads.',
-    f: r => money(r.marginTotal) },
+    f: r => money(r.marginTotal),
+    tot: t => money(t.marginTotal),
+  },
+  ,
   { k: 'breakEven', m: 'breakEven', t: 'B/E TACOS',
     why: '<b>Break-even TACOS.</b> The margin per unit written as a share of the price, which ' +
       'is the share of this product\'s revenue you could spend on advertising it before ' +
@@ -2203,7 +2830,9 @@ const COLS = [
       'the first order is worth more than this suggests, because the repeats cost nothing to win.',
     f: r => r.breakEven == null ? '—' :
       '<span class="badge ' + (r.breakEven < 0.2 ? 'b-crit' : r.breakEven < 0.35 ? 'b-warn' : 'b-good') +
-      '">' + pct(r.breakEven) + '</span>' },
+      '">' + pct(r.breakEven) + '</span>',
+    tot: t => pct(t.sales ? t.marginTotal / t.sales : null),
+  },
 ];
 
 /* What a single product's history can be charted on. */
@@ -2231,13 +2860,38 @@ function pullRows(key) {
   return _pullCache[key];
 }
 
+/* What the person typed goes back onto the page in the "nothing matches" note,
+   so it is escaped on the way — a stray < would otherwise eat the rest of it. */
+function escHtml(t) {
+  return String(t == null ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Matches a product on its ASIN, its name or its group. */
+function matchesQuery(r, q) {
+  if (!q) return true;
+  const hay = (r.asin + ' ' + (r.name || '') + ' ' + (r.group || '')).toLowerCase();
+  /* every word has to appear somewhere, in any order — "bori 15" finds
+     BoriCap 15 without needing the name exactly as it is written */
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.indexOf(w) >= 0);
+}
+
 function renderTable(all, shownRange, prevRange, info) {
-  const rows = all.filter(r => view.group === 'All' || r.group === view.group)
+  const q = (view.q || '').trim();
+  /* The two narrow together: pick BoriCap and type 30 and you get BoriCap 30,
+     not everything called 30 plus everything in BoriCap. */
+  const inGroup = r => view.group === 'All' || r.group === view.group;
+  const matched = all.filter(r => inGroup(r) && matchesQuery(r, q))
     .slice().sort(function (a, b) {
       const x = a[view.sort], y = b[view.sort];
       if (typeof x === 'string') return x.localeCompare(y) * view.dir * -1;
       return ((x == null ? -Infinity : x) - (y == null ? -Infinity : y)) * view.dir;
     });
+
+  /* Searching means you are looking for something particular, so a search
+     shows everything it found. It is only the resting state that is trimmed. */
+  const trim = !q && !view.showAll && matched.length > TOP_N;
+  const rows = trim ? matched.slice(0, TOP_N) : matched;
 
   /* The by-ASIN export is pulled for a window of its own choosing. Saying which
      window these numbers are really from is the difference between a report and
@@ -2258,17 +2912,53 @@ function renderTable(all, shownRange, prevRange, info) {
     'one to quote; this column is for ranking products against each other.';
   document.getElementById('tableTitle').innerHTML =
     'Products Overview' + badge(exact ? '?' : '!',
-      '<b>' + rangeLabel(shownRange.from, shownRange.to) + '</b> · ' + rows.length +
+      '<b>' + rangeLabel(shownRange.from, shownRange.to) + '</b> · ' + all.length +
       ' products. ' + note);
 
-  const groups = ['All'].concat(all.map(r => r.group).filter((v, i, a) => a.indexOf(v) === i).sort());
-  document.getElementById('groupFilters').innerHTML = groups.map(g =>
-    '<button class="chip" type="button" aria-pressed="' + (g === view.group) +
-    '" data-g="' + g + '">' + g + '</button>').join('');
-  document.querySelectorAll('#groupFilters .chip').forEach(b =>
-    b.onclick = () => { view.group = b.dataset.g; view.open = null; render(); });
+  /* The groups come from the data, so the list is rebuilt when the data
+     changes — but only then. Replacing the options on every keystroke would
+     close the menu under the person's hand while they were reading it. */
+  const groups = ['All'].concat(
+    all.map(r => r.group).filter((v, i, a) => v && a.indexOf(v) === i).sort());
+  const gs = document.getElementById('groupSel');
+  const sig = groups.join('\u0000');
+  if (gs.dataset.sig !== sig) {
+    gs.dataset.sig = sig;
+    gs.innerHTML = groups.map(g =>
+      '<option value="' + escHtml(g) + '">' +
+      (g === 'All' ? 'All groups' : escHtml(g)) + '</option>').join('');
+  }
+  /* a group that existed last month may not exist this one */
+  if (groups.indexOf(view.group) < 0) view.group = 'All';
+  gs.value = view.group;
 
-  const cols = COLS.filter(c => c.k !== 'salesDelta' || prevRange);
+  /* The search box is in the markup and wired once — rebuilding it here on
+     every keystroke would take the caret with it. Only the note beside it is
+     redrawn. */
+  const note2 = document.getElementById('searchNote');
+  if (q) {
+    note2.innerHTML = matched.length
+      ? matched.length + (matched.length === 1 ? ' match' : ' matches')
+      : '<span class="warnline">Nothing matches ' + escHtml(q) + '</span>';
+  } else if (trim) {
+    note2.innerHTML = 'Top ' + TOP_N + ' of ' + matched.length +
+      ' · <button type="button" class="linky" id="showAllBtn">show all</button>';
+  } else if (view.showAll && matched.length > TOP_N) {
+    note2.innerHTML = 'All ' + matched.length +
+      ' · <button type="button" class="linky" id="showAllBtn">top ' + TOP_N + '</button>';
+  } else {
+    note2.textContent = matched.length + (matched.length === 1 ? ' product' : ' products') +
+      (view.group === 'All' ? '' : ' in ' + view.group);
+  }
+  const sa = note2.querySelector('.linky');
+  if (sa) sa.onclick = function () { view.showAll = !view.showAll; view.open = null; render(); };
+
+  const sns = hasSns(DS);
+  const cols = COLS.filter(c => (c.k !== 'salesDelta' || prevRange) &&
+                                (c.k !== 'snsShare' || sns))
+    .map(c => c.k === 'salesDelta'
+      ? Object.assign({}, c, { t: view.mode === 'week' ? '% WoW' : '% MoM' })
+      : c);
 
   document.getElementById('headRow').innerHTML = cols.map(c =>
     '<th data-k="' + c.k + '">' + c.t + (c.why ? badge('?', c.why) : '') +
@@ -2280,10 +2970,17 @@ function renderTable(all, shownRange, prevRange, info) {
     render();
   });
 
-  const sum = f => rows.reduce((s, r) => s + (f(r) || 0), 0);
-  const tS = sum(r => r.sales), tU = sum(r => r.units), tOI = sum(r => r.orderItems),
-        tSe = sum(r => r.sessions), tM = sum(r => r.marginTotal), tPS = sum(r => r.prevSales),
-        tOO = sum(r => r.oItems), tSn = sum(r => r.snsItems);
+  /* Totals cover everything the search matched, not only the rows on screen —
+     a total of the visible fifteen would look like the brand's whole revenue
+     and be wrong by however much the tail carries. The label says so. */
+  const sum = f => matched.reduce((s, r) => s + (f(r) || 0), 0);
+  const T = {
+    n: matched.length, shown: rows.length, hidden: matched.length > rows.length,
+    sales: sum(r => r.sales), units: sum(r => r.units),
+    orderItems: sum(r => r.orderItems), sessions: sum(r => r.sessions),
+    marginTotal: sum(r => r.marginTotal), prevSales: sum(r => r.prevSales),
+    oItems: sum(r => r.oItems), snsItems: sum(r => r.snsItems),
+  };
 
   const open = view.open;
   document.getElementById('rows').innerHTML = rows.map(function (r) {
@@ -2295,15 +2992,8 @@ function renderTable(all, shownRange, prevRange, info) {
       (isOpen ? '<tr class="detail"><td colspan="' + cols.length + '">' +
         detail(r, open.metric, shownRange) + '</td></tr>' : '');
   }).join('') +
-    '<tr class="tot"><td>Total' + (view.group === 'All' ? '' : ' · ' + view.group) + '</td>' +
-    '<td>' + int(tSe) + '</td><td>' + pct(tSe ? tOI / tSe : null) +
-    (tOO ? '<span class="grp">' + pct((tOO - tSn) / tSe, 1) + ' ex SnS</span>' : '') + '</td>' +
-    '<td>' + (tOO ? pct(tSn / tOO, 0) : '—') + '</td><td>—</td>' +
-    '<td>' + money2(tU ? tS / tU : null) + '</td><td>' + int(tU) + '</td>' +
-    '<td>' + money(tS) + '</td>' +
-    (prevRange ? '<td>' + arrow(deltaOf(tS, tPS), 1) + '</td>' : '') +
-    '<td>—</td><td>' + money(tM) + '</td>' +
-    '<td>' + pct(tS ? tM / tS : null) + '</td></tr>';
+    (matched.length ? '<tr class="tot">' +
+      cols.map(c => '<td>' + (c.tot ? c.tot(T) : '—') + '</td>').join('') + '</tr>' : '');
 
   document.querySelectorAll('#rows td.cell').forEach(function (td) {
     td.onclick = function () {
@@ -2389,6 +3079,9 @@ function drawProductChart(asin, metricId) {
 let _info = null;
 let _viewRange = null;
 const bestAsinRangeForView = () => _viewRange;
+/* the pull standing for the period before, so the margin tile can say on hover
+   which window its change is measured against */
+let _viewPrevRange = null;
 
 /* ---------- masthead ----------
  * The band is the only part of the page that is about the brand rather than
@@ -2626,7 +3319,11 @@ function render() {
 
   const cs = compareSet(info);
   const rangeNow = bestAsinRange(DS, info.from, info.to);
-  const rangePrev = prevAsinRange(DS, rangeNow);
+  /* the pull standing for the month or week before this one, so the column can
+     honestly be called MoM or WoW */
+  const prevPeriod = periodInfo(info.mode, info.prev);
+  const rangePrev = prevAsinRange(DS, rangeNow, prevPeriod);
+  _viewPrevRange = rangePrev;
   _viewRange = rangeNow;
 
   let rows = [], prevRows = null;
@@ -2667,9 +3364,15 @@ function render() {
   none.hidden = !showProducts || !!rangeNow;
   if (showProducts && rangeNow) renderTable(rows, rangeNow, rangePrev, info);
   else if (showProducts) {
-    none.innerHTML = '<b>No by-ASIN data yet</b>Everything above comes from the daily ' +
-      'Sales and Traffic export. Per-product rows need the Detail Page Sales and Traffic ' +
-      'export, dropped in with the dates it covers.';
+    const anyPull = asinRanges(DS).length;
+    none.innerHTML = anyPull
+      ? '<b>No by-ASIN pull covering ' + info.label + '</b>The pulls on file are for ' +
+        'other spans. A month-long pull cannot stand in for one week of it — the rows ' +
+        'would be the whole month\'s under a week\'s heading. Drop in an export ' +
+        'covering ' + info.span + ' and the table appears.'
+      : '<b>No by-ASIN data yet</b>Everything above comes from the daily ' +
+        'Sales and Traffic export. Per-product rows need the Detail Page Sales and ' +
+        'Traffic export, dropped in with the dates it covers.';
   }
   document.getElementById('adsNote').hidden = view.tab !== 'ads';
   wireBadges();
@@ -2808,6 +3511,283 @@ async function signOut() {
 }
 
 
+/* ===== 12c_loaded.js ===== */
+/* ============================================================================
+ *  WHAT IS LOADED — and how to take it back out
+ *
+ *  Dropping a file in merges its numbers and forgets the file. That is the
+ *  right design for reading data, and a dead end when a by-ASIN export was
+ *  labelled with the wrong dates: the pull is in there under a span that never
+ *  happened, and nothing short of rebuilding the page removed it.
+ *
+ *  So this lists what the uploads left behind, grouped the way the data is
+ *  actually keyed, and lets a line be removed. Removal is armed by one click
+ *  and done by a second — no dialog, but no single slip either.
+ * ========================================================================= */
+
+/** One removable line. `sub` is the quiet second half, `n` the count. */
+function loadedRow(name, sub, act) {
+  return { name: name, sub: sub, act: act };
+}
+
+/**
+ * Everything the dataset holds, as removable lines.
+ *
+ * Daily records and order detail are listed a month at a time. Day by day
+ * would be four hundred lines for a year, and a whole dataset at once is not
+ * a removal, it is a reset — the month is the unit anyone actually means.
+ */
+function loadedGroups() {
+  const out = [];
+
+  const ranges = asinRanges(DS);
+  out.push({
+    title: 'By-ASIN pulls',
+    empty: 'None loaded. Product rows need the Detail Page Sales and Traffic export.',
+    rows: ranges.map(r => loadedRow(
+      rangeLabel(r.from, r.to),
+      (DS.asin[r.key] || []).length + ' products · ' + r.days +
+        ' day' + (r.days === 1 ? '' : 's'),
+      () => { delete DS.asin[r.key]; })),
+  });
+
+  out.push({
+    title: 'Daily sales and traffic',
+    empty: 'None loaded.',
+    rows: monthsOf(Object.keys(DS.daily || {})).map(m => loadedRow(
+      m.label, m.n + ' day' + (m.n === 1 ? '' : 's'),
+      () => { m.keys.forEach(k => { delete DS.daily[k]; }); })),
+  });
+
+  out.push({
+    title: 'Order detail (Subscribe & Save)',
+    empty: 'None loaded. Without it, conversion cannot be split.',
+    rows: monthsOf(Object.keys(DS.orders || {})).map(m => loadedRow(
+      m.label, m.n + ' day' + (m.n === 1 ? '' : 's'),
+      () => { m.keys.forEach(k => { delete DS.orders[k]; }); })),
+  });
+
+  const planKeys = Object.keys(DS.plan || {});
+  out.push({
+    title: 'Plan',
+    empty: 'None loaded.',
+    rows: planKeys.sort().map(k => loadedRow(
+      (DS.plan[k].month || '') + ' ' + (DS.plan[k].year || k),
+      money(DS.plan[k].planSales || 0) + ' revenue',
+      () => { delete DS.plan[k]; })),
+  });
+
+  const cogsN = Object.keys(DS.cogs || {}).length;
+  const feesN = Object.keys(DS.fees || {}).length;
+  out.push({
+    title: 'Costs and fees',
+    empty: 'None loaded. Margin and break-even need the landed-cost file.',
+    rows: [].concat(
+      cogsN ? [loadedRow('Landed costs', cogsN + ' products',
+        () => { DS.cogs = {}; })] : [],
+      feesN ? [loadedRow('Amazon fees', feesN + ' products',
+        () => { DS.fees = {}; })] : []),
+  });
+
+  return out;
+}
+
+/** Groups date keys by the month they fall in, newest first. */
+function monthsOf(keys) {
+  const by = {};
+  keys.forEach(function (k) {
+    const m = String(k).slice(0, 7);
+    (by[m] || (by[m] = [])).push(k);
+  });
+  return Object.keys(by).sort().reverse().map(function (m) {
+    const p = m.split('-');
+    return { label: MONTHS[+p[1] - 1] + ' ' + p[0], keys: by[m], n: by[m].length };
+  });
+}
+
+function renderLoaded() {
+  const box = document.getElementById('loadedList');
+  if (!box) return;
+  const groups = loadedGroups();
+
+  box.innerHTML = '<div class="loaded">' + groups.map(function (g, gi) {
+    return '<div class="lgroup">' + g.title + '</div>' +
+      (g.rows.length
+        ? g.rows.map((r, ri) =>
+            '<div class="lrow"><span class="lname">' + r.name +
+            '<br><span class="lsub2">' + r.sub + '</span></span>' +
+            '<button class="btn tiny" type="button" data-g="' + gi + '" data-r="' + ri +
+            '">Remove</button></div>').join('')
+        : '<p class="lempty">' + g.empty + '</p>');
+  }).join('') + '</div>';
+
+  /* Armed by the first click, done by the second. A dataset is easy to reload
+     and tedious to reload, and a stray click should not cost anyone an
+     afternoon. */
+  box.querySelectorAll('button[data-g]').forEach(function (btn) {
+    btn.onclick = function () {
+      if (!btn.classList.contains('arm')) {
+        box.querySelectorAll('button.arm').forEach(function (o) {
+          o.classList.remove('arm'); o.textContent = 'Remove';
+        });
+        btn.classList.add('arm');
+        btn.textContent = 'Remove?';
+        return;
+      }
+      const g = groups[+btn.getAttribute('data-g')];
+      const r = g.rows[+btn.getAttribute('data-r')];
+      r.act();
+      logLine('warn', 'Removed <b>' + r.name + '</b> from ' + g.title.toLowerCase() +
+        ' — save or download to make it stick.');
+      DS.updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
+      view.key = null;              // the period in view may have just gone
+      view.open = null;
+      render();
+      showChecks();
+      renderLoaded();
+      document.getElementById('exportBtn').disabled = false;
+    };
+  });
+}
+
+/* ============================================================================
+ *  THE FILES AMAZON DOES NOT PROVIDE
+ *
+ *  Landed cost and the revenue plan are typed by hand, which makes the empty
+ *  page the hardest part of setting a brand up: nobody remembers what the
+ *  columns are called. The same button therefore does both jobs — hands out a
+ *  blank template when nothing is loaded, and hands back the current file when
+ *  something is, so editing means downloading, changing a number and dropping
+ *  it in again rather than rebuilding a spreadsheet from memory.
+ * ========================================================================= */
+
+/** RFC-4180 enough: quote anything holding a comma, a quote or a line break. */
+function toCsv(cols, rows) {
+  const cell = function (v) {
+    const t = v == null ? '' : String(v);
+    return /[",\n\r]/.test(t) ? '"' + t.split('"').join('""') + '"' : t;
+  };
+  return [cols.join(',')].concat(rows.map(r => cols.map(c => cell(r[c])).join(','))).join('\r\n');
+}
+
+function downloadCsv(name, text) {
+  /* the BOM is what makes Excel open a UTF-8 CSV without mangling accents */
+  const blob = new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* Example rows carry an ASIN and a month the readers throw away, so a template
+   dropped back in unedited loads nothing rather than a fictional product. */
+const COGS_EXAMPLE = [
+  { 'ASIN': 'B0EXAMPLE01', 'Product': 'Example product 30 ct', 'Group': 'Example',
+    'TOTAL COGS': '3.18', 'FBM Shipping': '' },
+  { 'ASIN': 'B0EXAMPLE01', 'Product': 'Example product, shipped by you',
+    'Group': 'Example', 'TOTAL COGS': '5.54', 'FBM Shipping': '4.25' },
+];
+const PLAN_EXAMPLE = [
+  { 'Year': '2026', 'Month': 'Example', 'Plan sales': '150000' },
+];
+
+/**
+ * The cost file as it stands, or the template when there is none.
+ *
+ * A file loaded with its own working columns — a cost broken into
+ * manufacturing, pick and pack, corrugate — comes back out with those columns
+ * intact, in the order they were in. Only a brand starting from scratch gets
+ * the short version, because that is the one nobody has to think about.
+ */
+function cogsCsv() {
+  const keys = Object.keys(DS.cogs || {}).sort();
+  if (!keys.length) return toCsv(COGS_COLS, COGS_EXAMPLE);
+
+  /* the columns of whatever was loaded, first-seen order, plus anything the
+     report needs that the original file did not carry */
+  const cols = [];
+  keys.forEach(function (a) {
+    Object.keys((DS.cogs[a] || {}).raw || {}).forEach(function (c) {
+      if (cols.indexOf(c) < 0) cols.push(c);
+    });
+  });
+  /* A file that already states the cost — as a total or as parts that add up
+     to one — is not given another column for it. Adding one made the download
+     differ from what was uploaded, which is exactly the drift this is meant to
+     avoid. */
+  const hasCost = cols.indexOf('TOTAL COGS') >= 0 || cols.indexOf('Total') >= 0 ||
+    cols.indexOf('Total COGS') >= 0 || cols.indexOf('Landed Manufacturer') >= 0;
+  COGS_COLS.forEach(function (c) {
+    if (c === 'TOTAL COGS' && hasCost) return;
+    if (cols.indexOf(c) < 0) cols.push(c);
+  });
+
+  const rows = keys.map(function (a) {
+    const c = DS.cogs[a];
+    const row = Object.assign({}, c.raw || {});
+    row['ASIN'] = a;
+    if (row['Product'] == null) row['Product'] = c.name;
+    if (row['Group'] == null) row['Group'] = c.group;
+    if (!hasCost) row['TOTAL COGS'] = c.cogs;
+    if (row['FBM Shipping'] == null) {
+      row['FBM Shipping'] = c.fbmShipping == null ? '' : c.fbmShipping;
+    }
+    return row;
+  });
+  return toCsv(cols, rows);
+}
+
+/**
+ * The plan as it stands, or the template when there is none.
+ *
+ * Only revenue is read today, so that is all the blank template asks for. A
+ * plan already carrying an advertising figure keeps it on the way out —
+ * dropping a column someone typed, because this page has no use for it yet,
+ * would be taking their work away.
+ */
+function planCsv() {
+  const keys = Object.keys(DS.plan || {});
+  if (!keys.length) return toCsv(PLAN_COLS, PLAN_EXAMPLE);
+  const rows = keys.map(k => DS.plan[k])
+    .sort((a, b) => (a.year - b.year) || (MONTHS.indexOf(a.month) - MONTHS.indexOf(b.month)));
+  const anySpend = rows.some(r => r.planSpend != null);
+  const cols = anySpend ? PLAN_COLS.concat(['Plan spend']) : PLAN_COLS;
+  return toCsv(cols, rows.map(r => ({ 'Year': r.year, 'Month': r.month,
+    'Plan sales': r.planSales,
+    'Plan spend': r.planSpend == null ? '' : r.planSpend })));
+}
+
+function renderManualDownloads() {
+  const box = document.getElementById('manualDl');
+  if (!box) return;
+  const slug = String(DS.brand || 'brand').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'brand';
+  const nCogs = Object.keys(DS.cogs || {}).length;
+  const nPlan = Object.keys(DS.plan || {}).length;
+
+  const files = [
+    { id: 'cogs', label: nCogs ? 'Product costs · ' + nCogs + ' loaded'
+                               : 'Product costs · blank template',
+      name: slug + '-costs.csv', make: cogsCsv },
+    { id: 'plan', label: nPlan ? 'Revenue plan · ' + nPlan + ' month' + (nPlan === 1 ? '' : 's')
+                               : 'Revenue plan · blank template',
+      name: slug + '-plan.csv', make: planCsv },
+  ];
+
+  box.innerHTML = files.map(f =>
+    '<button class="btn tiny" type="button" data-dl="' + f.id + '">' + f.label +
+    '</button>').join('');
+  box.querySelectorAll('button[data-dl]').forEach(function (btn) {
+    btn.onclick = function () {
+      const f = files.find(x => x.id === btn.getAttribute('data-dl'));
+      downloadCsv(f.name, f.make());
+      logLine('ok', 'Downloaded <b>' + f.name + '</b> — edit it and drop it back in.');
+    };
+  });
+}
+
+
 /* ===== 13_update.js ===== */
 /* ============================================================================
  *  UPDATE PANEL — drop files in, get a new copy of the page out
@@ -2898,6 +3878,8 @@ async function handleFiles(fileList) {
   DS.updated = new Date().toISOString().slice(0, 16).replace('T', ' ');
   DS.log = DS.log.slice(0, 40);
   showChecks();
+  renderLoaded();
+  renderManualDownloads();
   render();
   document.getElementById('exportBtn').disabled = false;
 }
@@ -2961,10 +3943,13 @@ function exportSite() {
   doc.querySelector('#dataset').textContent = JSON.stringify(DS);
 
   // the rendered DOM is rebuilt on load, so ship it empty and small
-  ['kpis', 'rows', 'headRow', 'periodSel', 'groupFilters', 'chartGrid',
-   'cmpHead', 'cmpRows'].forEach(function (id) {
+  ['kpis', 'rows', 'headRow', 'periodSel', 'searchNote', 'chartGrid',
+   'cmpHead', 'cmpRows', 'loadedList', 'manualDl'].forEach(function (id) {
     const n = doc.querySelector('#' + id); if (n) n.innerHTML = '';
   });
+  /* the search box is a live control, not content — ship it empty */
+  const ps = doc.querySelector('#prodSearch');
+  if (ps) ps.setAttribute('value', '');
 
   const html = '<!doctype html>\n' + doc.outerHTML;
   const blob = new Blob([html], { type: 'text/html' });
@@ -3038,6 +4023,8 @@ function initUpdate() {
     gate.hidden = true;
     document.getElementById('unlocked').hidden = false;
     showChecks();
+    renderLoaded();
+    renderManualDownloads();
   });
 
   document.getElementById('toggleUpdate').onclick = function () {
@@ -3045,7 +4032,7 @@ function initUpdate() {
     p.hidden = !p.hidden;
     if (!p.hidden) {
       p.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      if (unlocked) showChecks();
+      if (unlocked) { showChecks(); renderLoaded(); renderManualDownloads(); }
     }
   };
 
@@ -3202,6 +4189,7 @@ function applyRole() {
     unlocked = admin;
     document.getElementById('gate').hidden = true;
     document.getElementById('unlocked').hidden = !admin;
+    if (admin) { renderLoaded(); renderManualDownloads(); }
   }
   document.getElementById('toggleUpdate').hidden = !admin;
   document.getElementById('signOut').hidden = MODE !== 'server';
@@ -3281,6 +4269,8 @@ function begin(ds) {
   DS.refBreak = DS.refBreak ?? 10; DS.refMin = DS.refMin ?? 0.30;
   migrateAsin(DS);
   initUpdate();
+  initTableSearch();
+  initChartPicker();
   applyRole();
   render();
   document.getElementById('exportBtn').disabled = MODE === 'file';
@@ -3505,7 +4495,7 @@ async function makePdf() {
   doc.innerHTML = html.join('');
   /* nothing in a printed page is clickable, and the marks and pickers would
      only be clutter on paper */
-  doc.querySelectorAll('.ibadge, #chartPick, .filters, .ar, #noAsin')
+  doc.querySelectorAll('.ibadge, #chartPick, #exMenu, .dropwrap, .filters, .ar, #noAsin')
     .forEach(n => n.remove());
   doc.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
 
