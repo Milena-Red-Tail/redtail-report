@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Heale Dashboard</title>
+<title>UPGRADE-MARKER-1787946381128 Heale Dashboard</title>
 <style>
 :root{
   --plane:#F5F6F8; --surface:#FCFCFB; --surface-2:#EFF1F3;
@@ -194,17 +194,27 @@ header{position:sticky;top:0;z-index:20;background:var(--plane);
   display:flex;gap:6px;justify-content:flex-end}
 
 /* what is loaded, and the way back out of it */
-.loaded{display:flex;flex-direction:column;gap:2px;margin:10px 0 4px}
-.loaded .lgroup{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
-  color:var(--ink-3);margin:12px 0 4px}
-.loaded .lrow{display:flex;align-items:center;gap:12px;padding:7px 10px;border-radius:8px;
-  font-size:.82rem}
-.loaded .lrow:nth-child(odd){background:var(--surface-2)}
-.loaded .lrow .lname{flex:1;min-width:0}
-.loaded .lrow .lsub2{color:var(--ink-3);font-size:.76rem}
-.loaded .lrow .btn{padding:3px 10px;font-size:.72rem}
-.loaded .lrow .btn.arm{background:var(--crit);border-color:var(--crit);color:#fff}
-.loaded .lempty{font-size:.82rem;color:var(--ink-3);padding:6px 0}
+.loaded{display:flex;flex-direction:column;gap:6px;margin:10px 0 4px}
+.lset{border:1px solid var(--ring);border-radius:10px;background:var(--surface);
+  overflow:hidden}
+.lset summary{display:flex;align-items:baseline;gap:12px;padding:10px 14px;cursor:pointer;
+  list-style:none;user-select:none}
+.lset summary::-webkit-details-marker{display:none}
+.lset summary::before{content:"\25b8";color:var(--ink-3);font-size:.7rem;
+  transition:transform .12s ease;flex:none;line-height:1.6}
+.lset[open] summary::before{transform:rotate(90deg)}
+.lset summary:hover{background:var(--surface-2)}
+.lset .lgroup{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-2);flex:none}
+.lset .lsum{font-size:.78rem;color:var(--ink-3);margin-left:auto;text-align:right}
+.lset .lrow:first-of-type{border-top:1px solid var(--grid)}
+.lrow{display:flex;align-items:center;gap:12px;padding:8px 14px;font-size:.82rem}
+.lrow:nth-of-type(even){background:var(--surface-2)}
+.lrow .lname{flex:1;min-width:0}
+.lrow .lsub2{color:var(--ink-3);font-size:.76rem}
+.lrow .btn{padding:3px 10px;font-size:.72rem}
+.lrow .btn.arm{background:var(--crit);border-color:var(--crit);color:#fff}
+.lempty{font-size:.82rem;color:var(--ink-3);padding:8px 14px;margin:0}
 .dropmenu .ck{border:0;border-radius:8px;padding:7px 10px;font-size:.82rem;width:100%}
 .dropmenu .ck:has(input:checked){color:var(--ink)}
 .dropmenu .ckall{margin:6px 0 0;padding-top:8px;border-top:1px solid var(--grid);
@@ -608,7 +618,7 @@ input[type=range]{accent-color:var(--s1);cursor:pointer}
     </div>
 
     <div class="prow">
-      <span>FBM shipping cost per unit — used where Amazon charges no FBA fee:</span>
+      <span>Amazon fee per unit for FBM products, where the cost file gives none:</span>
       <input type="number" id="fbmCost" step="0.01" min="0" placeholder="0.00"
              style="width:90px;font-size:.82rem;padding:6px 9px">
     </div>
@@ -1146,16 +1156,18 @@ function readOrders(rows, tz) {
 
 /* What the report actually needs from a cost file, which is less than most
    cost spreadsheets carry:
-     ASIN          the key everything else hangs off
-     Product       the name shown in the table
-     Group         the grouping the dropdown and the filter use
-     TOTAL COGS    the landed cost itself
-     FBM Shipping  only for products Amazon does not ship, where there is no
-                   FBA fee and your own shipping stands in for it
+     ASIN            the key everything else hangs off
+     Product         the name shown in the table
+     Group           the grouping the dropdown and the filter use
+     TOTAL COGS      the landed cost itself
+     FBM Amazon Fee  only for products Amazon does not ship. They are absent
+                     from the Fee Preview, so Amazon's fee for them has to be
+                     stated here. It is the referral fee; there is no
+                     fulfilment fee, because Amazon does not fulfil them.
    The breakdown columns are welcome and are kept, but nothing reads them
    beyond adding them up when there is no total. Core SKU is not read at all —
    the SKUs shown against a product come from the by-ASIN export. */
-const COGS_COLS = ['ASIN', 'Product', 'Group', 'TOTAL COGS', 'FBM Shipping'];
+const COGS_COLS = ['ASIN', 'Product', 'Group', 'TOTAL COGS', 'FBM Amazon Fee'];
 const PLAN_COLS = ['Year', 'Month', 'Plan sales'];
 
 function readCogs(objs) {
@@ -1169,7 +1181,11 @@ function readCogs(objs) {
       ? toNum(stated)
       : toNum(o['Landed Manufacturer']) + toNum(o['Pick / Pack / Labeling']) +
         toNum(o['Bundling Material']) + toNum(o['Corrugate']);
-    const ship = o['FBM Shipping'];
+    /* Named "FBM Shipping" in files written before it was understood to be
+       Amazon's fee for a merchant-fulfilled product rather than a shipping
+       cost. Both spellings are read; only the new one is written. */
+    const ship = [o['FBM Amazon Fee'], o['FBM Shipping'], o['FBM Fee']]
+      .find(v => v != null && String(v).trim() !== '');
     /* Every column of the file is kept beside the total, so downloading it
        back out returns what was put in — someone's own working columns are
        not something this page should quietly throw away. Capped, because a
@@ -1181,7 +1197,7 @@ function readCogs(objs) {
     return { asin: String(o['ASIN'] || '').trim(), name: String(o['Product'] || '').trim(),
              sku: String(o['Core SKU'] || '').trim(),
              group: String(o['Group'] || 'Ungrouped').trim(), cogs: total,
-             fbmShipping: (ship === '' || ship == null) ? null : toNum(ship),
+             fbmFee: ship == null ? null : toNum(ship),
              raw: raw };
   }).filter(r => r.asin && r.asin !== 'B0EXAMPLE01');
 }
@@ -1359,6 +1375,20 @@ function mergeAsin(ds, rows, from, to) {
 }
 
 /** Datasets written before ranges existed stored "2026-Aug" — a whole month. */
+/**
+ * The cost file's FBM column was read as a shipping cost and is in fact
+ * Amazon's fee for that product. Datasets saved before that was understood
+ * carry it under the old name; this moves it across without anyone having to
+ * reload a file.
+ */
+function migrateFbm(ds) {
+  Object.keys(ds.cogs || {}).forEach(function (a) {
+    const c = ds.cogs[a];
+    if (c && c.fbmFee == null && c.fbmShipping != null) c.fbmFee = c.fbmShipping;
+  });
+  if (ds.fbmFee == null && ds.fbmShipping != null) ds.fbmFee = ds.fbmShipping;
+}
+
 function migrateAsin(ds) {
   Object.keys(ds.asin || {}).forEach(function (k) {
     if (k.indexOf('|') >= 0) return;
@@ -1472,7 +1502,8 @@ function mergeDataset(ds, inc) {
     if (!ds.plan[k]) { ds.plan[k] = inc.plan[k]; plans++; }
   });
   if ((!ds.brand || ds.brand === 'Brand') && inc.brand) ds.brand = inc.brand;
-  if (ds.fbmShipping == null && inc.fbmShipping != null) ds.fbmShipping = inc.fbmShipping;
+  if (ds.fbmFee == null && inc.fbmFee != null) ds.fbmFee = inc.fbmFee;
+  if (ds.fbmFee == null && inc.fbmShipping != null) ds.fbmFee = inc.fbmShipping;
   if (!ds.logo && inc.logo) ds.logo = inc.logo;
   if (!ds.bandColor && inc.bandColor) ds.bandColor = inc.bandColor;
   if (!ds.reportTitle && inc.reportTitle) ds.reportTitle = inc.reportTitle;
@@ -1509,18 +1540,33 @@ function productEconomics(ds, asin, price) {
   const c = ds.cogs[asin], f = ds.fees[asin];
   if (!c || price == null || !isFinite(price) || price <= 0) return null;
 
-  const refRate = (f && f.refRate != null) ? f.refRate
-                : (price <= (ds.refBreak || 10) ? (ds.refLow || 0.08) : (ds.refHigh || 0.15));
-  const referral = Math.max(ds.refMin || 0.30, price * refRate);
-  /* Amazon charges an FBA fee only where it ships. Where the brand ships, the
-     cost is its own — per product first, then the fallback typed in the panel. */
-  const fulfil = f ? f.fba
-               : (c.fbmShipping != null ? c.fbmShipping
-               : (ds.fbmShipping != null ? ds.fbmShipping : null));
-  if (fulfil == null) return null;
+  /* --- Amazon ships it: the Fee Preview states both fees outright --- */
+  if (f) {
+    const rate = f.refRate != null ? f.refRate
+               : (price <= (ds.refBreak || 10) ? (ds.refLow || 0.08) : (ds.refHigh || 0.15));
+    const referral = Math.max(ds.refMin || 0.30, price * rate);
+    const margin = price - c.cogs - referral - f.fba;
+    return { cogs: c.cogs, referral: referral, fulfil: f.fba, fbm: false,
+             margin: margin, marginRate: margin / price };
+  }
 
-  const margin = price - c.cogs - referral - fulfil;
-  return { cogs: c.cogs, referral: referral, fulfil: fulfil, fbm: !f,
+  /* --- the brand ships it ---
+   * The Fee Preview covers only what Amazon fulfils, so an FBM product has no
+   * record there and its Amazon fee comes from the cost file instead. That
+   * figure is the referral, not a fulfilment charge: Amazon does not fulfil
+   * this one, so there is no fulfilment fee to take.
+   *
+   * This used to subtract the same number twice — once as the referral it
+   * worked out from the price, and again as a fulfilment cost. FloraCap 60
+   * came out at $22.16 a unit when it is $30.41.
+   *
+   * The brand's own cost of shipping is not in this file and is not deducted.
+   */
+  const fee = c.fbmFee != null ? c.fbmFee
+            : (ds.fbmFee != null ? ds.fbmFee : null);
+  if (fee == null) return null;
+  const margin = price - c.cogs - fee;
+  return { cogs: c.cogs, referral: fee, fulfil: 0, fbm: true,
            margin: margin, marginRate: margin / price };
 }
 
@@ -2485,10 +2531,17 @@ function renderKpis(info, cs, rows, prevRows) {
         '>' + arrow(deltaOf(margin, pMargin), 1) +
         ' <em>' + (view.mode === 'week' ? 'WoW' : 'MoM') + '</em></span>',
         be == null ? 'needs landed cost' : pct(be) + ' of revenue, before ads',
-        'What is left of revenue after the landed cost of the goods, the Amazon referral ' +
-        'fee and fulfilment — and before advertising, storage, returns and your own time. ' +
-        'It is the pot that advertising is paid out of. Only products with a landed cost ' +
-        'on file are counted, so this is a floor, not a total.');
+        'What is left of revenue after the landed cost of the goods and what Amazon takes ' +
+        '— and before advertising, storage, returns and your own time. It is the pot that ' +
+        'advertising is paid out of.<br><br>' +
+        'What Amazon takes depends on who ships:<br>' +
+        '<b>FBA</b> — the referral fee and the fulfilment fee, both from the Fee Preview ' +
+        'export.<br>' +
+        '<b>FBM</b> — the referral fee alone, taken from the cost file, because Amazon ' +
+        'does not fulfil these and charges nothing for doing so. Your own cost of shipping ' +
+        'them is not deducted here.<br><br>' +
+        'Only products with a landed cost on file are counted, so this is a floor, not a ' +
+        'total.');
     }
     if (id === '#headroom') {
       /* This used to be labelled "Ad headroom" while showing the share of the
@@ -2744,8 +2797,10 @@ function initTableSearch() {
 const COLS = [
   { k: 'name', m: 'sales', t: 'Product',
     why: 'Name and group come from your landed-cost file. <b>FBM</b> marks a product ' +
-      'Amazon does not ship, where the fulfilment cost used is your own shipping cost rather ' +
-      'than an FBA fee.',
+      'Amazon does not ship. Those are absent from the Fee Preview, so Amazon\'s fee for ' +
+      'them comes from the cost file — and it is the referral fee, with no fulfilment fee ' +
+      'beside it, because Amazon does not fulfil them. Your own cost of shipping is not ' +
+      'deducted.',
     f: r => '<span class="pname">' + r.name + '</span>' +
       '<span class="grp">' + r.group + (r.fbm ? ' · FBM' : '') + '</span>',
     tot: t => 'Total' + (t.hidden ? '<span class="grp">all ' + t.n + ' products, not just the ' +
@@ -2815,7 +2870,11 @@ const COLS = [
   },
   ,
   { k: 'marginTotal', m: 'marginTotal', t: 'Margin',
-    why: 'Margin per unit multiplied by units sold — what this product contributed before ads.',
+    why: 'What this product contributed before advertising: price less landed cost, less ' +
+      'what Amazon took, multiplied by units sold.<br><br>For an <b>FBA</b> product Amazon ' +
+      'takes the referral fee and the fulfilment fee. For an <b>FBM</b> one it takes the ' +
+      'referral fee only — it does not ship these, so there is no fulfilment fee, and your ' +
+      'own shipping cost is not deducted.',
     f: r => money(r.marginTotal),
     tot: t => money(t.marginTotal),
   },
@@ -3292,6 +3351,7 @@ function renderPeriods(info) {
 /* ---------- master render ---------- */
 function render() {
   migrateAsin(DS);
+  migrateFbm(DS);
   _pullCache = {};
   _noteSeq = 0;
   Object.keys(NOTES).forEach(k => delete NOTES[k]);
@@ -3525,10 +3585,16 @@ async function signOut() {
  *  and done by a second — no dialog, but no single slip either.
  * ========================================================================= */
 
-/** One removable line. `sub` is the quiet second half, `n` the count. */
+/** One removable line. `sub` is the quiet second half. */
 function loadedRow(name, sub, act) {
   return { name: name, sub: sub, act: act };
 }
+
+/* Which groups are open. A year of data is forty-odd lines, and nobody scrolls
+   through forty lines to check that August is loaded — the count in the
+   summary answers that. Kept out here so removing a line does not fold the
+   group shut under the person's hand. */
+const loadedOpen = {};
 
 /**
  * Everything the dataset holds, as removable lines.
@@ -3543,6 +3609,10 @@ function loadedGroups() {
   const ranges = asinRanges(DS);
   out.push({
     title: 'By-ASIN pulls',
+    sum: ranges.length
+      ? ranges.length + (ranges.length === 1 ? ' pull · ' : ' pulls · ') +
+        rangeLabel(ranges[0].from, ranges[ranges.length - 1].to)
+      : 'none',
     empty: 'None loaded. Product rows need the Detail Page Sales and Traffic export.',
     rows: ranges.map(r => loadedRow(
       rangeLabel(r.from, r.to),
@@ -3553,6 +3623,7 @@ function loadedGroups() {
 
   out.push({
     title: 'Daily sales and traffic',
+    sum: spanOf(Object.keys(DS.daily || {})),
     empty: 'None loaded.',
     rows: monthsOf(Object.keys(DS.daily || {})).map(m => loadedRow(
       m.label, m.n + ' day' + (m.n === 1 ? '' : 's'),
@@ -3561,6 +3632,7 @@ function loadedGroups() {
 
   out.push({
     title: 'Order detail (Subscribe & Save)',
+    sum: spanOf(Object.keys(DS.orders || {})),
     empty: 'None loaded. Without it, conversion cannot be split.',
     rows: monthsOf(Object.keys(DS.orders || {})).map(m => loadedRow(
       m.label, m.n + ' day' + (m.n === 1 ? '' : 's'),
@@ -3568,8 +3640,13 @@ function loadedGroups() {
   });
 
   const planKeys = Object.keys(DS.plan || {});
+  const planTotal = planKeys.reduce((a, k) => a + (DS.plan[k].planSales || 0), 0);
   out.push({
     title: 'Plan',
+    sum: planKeys.length
+      ? planKeys.length + ' month' + (planKeys.length === 1 ? '' : 's') + ' · ' +
+        money(planTotal) + ' in total'
+      : 'none',
     empty: 'None loaded.',
     rows: planKeys.sort().map(k => loadedRow(
       (DS.plan[k].month || '') + ' ' + (DS.plan[k].year || k),
@@ -3581,6 +3658,8 @@ function loadedGroups() {
   const feesN = Object.keys(DS.fees || {}).length;
   out.push({
     title: 'Costs and fees',
+    sum: (cogsN ? cogsN + ' product cost' + (cogsN === 1 ? '' : 's') : 'no costs') +
+      (feesN ? ' · ' + feesN + ' Amazon fee record' + (feesN === 1 ? '' : 's') : ''),
     empty: 'None loaded. Margin and break-even need the landed-cost file.',
     rows: [].concat(
       cogsN ? [loadedRow('Landed costs', cogsN + ' products',
@@ -3590,6 +3669,15 @@ function loadedGroups() {
   });
 
   return out;
+}
+
+/** "12 months · Sep 2025 – Aug 2026", or "none". */
+function spanOf(keys) {
+  const m = monthsOf(keys);
+  if (!m.length) return 'none';
+  const n = m.length + ' month' + (m.length === 1 ? '' : 's');
+  return m.length === 1 ? n + ' · ' + m[0].label
+                        : n + ' · ' + m[m.length - 1].label + ' – ' + m[0].label;
 }
 
 /** Groups date keys by the month they fall in, newest first. */
@@ -3611,15 +3699,26 @@ function renderLoaded() {
   const groups = loadedGroups();
 
   box.innerHTML = '<div class="loaded">' + groups.map(function (g, gi) {
-    return '<div class="lgroup">' + g.title + '</div>' +
+    return '<details class="lset"' + (loadedOpen[g.title] ? ' open' : '') +
+      ' data-t="' + escHtml(g.title) + '">' +
+      '<summary><span class="lgroup">' + g.title + '</span>' +
+      '<span class="lsum">' + (g.sum || '') + '</span></summary>' +
       (g.rows.length
         ? g.rows.map((r, ri) =>
             '<div class="lrow"><span class="lname">' + r.name +
             '<br><span class="lsub2">' + r.sub + '</span></span>' +
             '<button class="btn tiny" type="button" data-g="' + gi + '" data-r="' + ri +
             '">Remove</button></div>').join('')
-        : '<p class="lempty">' + g.empty + '</p>');
+        : '<p class="lempty">' + g.empty + '</p>') +
+      '</details>';
   }).join('') + '</div>';
+
+  /* remember which are open, so a removal does not fold the group away */
+  box.querySelectorAll('details.lset').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      loadedOpen[d.getAttribute('data-t')] = d.open;
+    });
+  });
 
   /* Armed by the first click, done by the second. A dataset is easy to reload
      and tedious to reload, and a stray click should not cost anyone an
@@ -3684,9 +3783,9 @@ function downloadCsv(name, text) {
    dropped back in unedited loads nothing rather than a fictional product. */
 const COGS_EXAMPLE = [
   { 'ASIN': 'B0EXAMPLE01', 'Product': 'Example product 30 ct', 'Group': 'Example',
-    'TOTAL COGS': '3.18', 'FBM Shipping': '' },
+    'TOTAL COGS': '3.18', 'FBM Amazon Fee': '' },
   { 'ASIN': 'B0EXAMPLE01', 'Product': 'Example product, shipped by you',
-    'Group': 'Example', 'TOTAL COGS': '5.54', 'FBM Shipping': '4.25' },
+    'Group': 'Example', 'TOTAL COGS': '5.54', 'FBM Amazon Fee': '8.25' },
 ];
 const PLAN_EXAMPLE = [
   { 'Year': '2026', 'Month': 'Example', 'Plan sales': '150000' },
@@ -3718,8 +3817,10 @@ function cogsCsv() {
      avoid. */
   const hasCost = cols.indexOf('TOTAL COGS') >= 0 || cols.indexOf('Total') >= 0 ||
     cols.indexOf('Total COGS') >= 0 || cols.indexOf('Landed Manufacturer') >= 0;
+  const hasFbm = cols.indexOf('FBM Amazon Fee') >= 0 || cols.indexOf('FBM Shipping') >= 0;
   COGS_COLS.forEach(function (c) {
     if (c === 'TOTAL COGS' && hasCost) return;
+    if (c === 'FBM Amazon Fee' && hasFbm) return;
     if (cols.indexOf(c) < 0) cols.push(c);
   });
 
@@ -3730,8 +3831,12 @@ function cogsCsv() {
     if (row['Product'] == null) row['Product'] = c.name;
     if (row['Group'] == null) row['Group'] = c.group;
     if (!hasCost) row['TOTAL COGS'] = c.cogs;
-    if (row['FBM Shipping'] == null) {
-      row['FBM Shipping'] = c.fbmShipping == null ? '' : c.fbmShipping;
+    /* written under the name that says what it is; a file that came in with
+       the old spelling keeps that column and is not given a second one */
+    if (row['FBM Amazon Fee'] == null && row['FBM Shipping'] == null) {
+      row['FBM Amazon Fee'] = c.fbmFee == null ? '' : c.fbmFee;
+    } else if (row['FBM Shipping'] != null) {
+      row['FBM Shipping'] = c.fbmFee == null ? '' : c.fbmFee;
     }
     return row;
   });
@@ -3918,7 +4023,7 @@ function exportSite() {
   carry('#titleIn', DS.reportTitle || '');
   carry('#bandIn', DS.bandColor || BAND_DEFAULT);
   carry('#bandAlpha', DS.bandAlpha == null ? 92 : DS.bandAlpha);
-  carry('#fbmCost', DS.fbmShipping != null ? DS.fbmShipping : '');
+  carry('#fbmCost', DS.fbmFee != null ? DS.fbmFee : '');
   const tzSel = doc.querySelector('#tzIn');
   if (tzSel) {
     tzSel.querySelectorAll('option').forEach(function (o) {
@@ -4114,10 +4219,10 @@ function initUpdate() {
   };
 
   const fbm = document.getElementById('fbmCost');
-  if (DS.fbmShipping != null) fbm.value = DS.fbmShipping;
+  if (DS.fbmFee != null) fbm.value = DS.fbmFee;
   fbm.addEventListener('change', function () {
     const v = parseFloat(fbm.value);
-    DS.fbmShipping = isFinite(v) && v >= 0 ? v : null;
+    DS.fbmFee = isFinite(v) && v >= 0 ? v : null;
     showChecks(); render();
     document.getElementById('exportBtn').disabled = false;
   });
@@ -4268,6 +4373,7 @@ function begin(ds) {
   DS.refLow = DS.refLow ?? 0.08; DS.refHigh = DS.refHigh ?? 0.15;
   DS.refBreak = DS.refBreak ?? 10; DS.refMin = DS.refMin ?? 0.30;
   migrateAsin(DS);
+  migrateFbm(DS);
   initUpdate();
   initTableSearch();
   initChartPicker();
